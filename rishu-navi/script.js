@@ -38,7 +38,11 @@ function render() {
   $("holiday-output").textContent = holidayText;
   $("holiday-minutes").setAttribute("aria-valuetext", holidayText);
   $("weekly-total").textContent = calc.formatMinutes(weekly);
-  const result = calc.calculateStudyTime($("start-date").value, APP_CONFIG.terms[$("term").value].finalDeadline, weekdays, rule, holidayMinutes, JAPAN_HOLIDAYS);
+  const term = APP_CONFIG.terms[$("term").value];
+  const startValue = $("start-date").value;
+  const result = term.startDate && calc.parseDate(startValue) && startValue < term.startDate
+    ? { error: `${term.label}の開始日は、授業開始日の${calc.formatDate(term.startDate)}以降を選んでください。` }
+    : calc.calculateStudyTime(startValue, term.finalDeadline, weekdays, rule, holidayMinutes, JAPAN_HOLIDAYS);
   $("result-error").hidden = !result.error;
   $("valid-results").hidden = Boolean(result.error);
   if (result.error) {
@@ -78,13 +82,22 @@ function selectTerm() {
   const term = APP_CONFIG.terms[$("term").value];
   const deadline = calc.parseDate(term.finalDeadline);
   $("deadline").textContent = deadline ? `最終締切：${deadline.getUTCMonth() + 1}月${deadline.getUTCDate()}日（${deadline.getUTCFullYear()}年）` : "最終締切の設定を確認してください";
+  $("start-date").min = term.startDate || "";
   $("start-date").value = term.startDate || calc.todayKey();
+  $("today").disabled = Boolean(term.startDate && calc.todayKey() < term.startDate);
+  $("today-help").hidden = !$("today").disabled;
   render();
 }
 $("term").addEventListener("input", selectTerm);
 $("term").addEventListener("change", selectTerm);
 $("session-count").textContent = APP_CONFIG.sessionsPerCourse;
-$("today").addEventListener("click", () => { $("start-date").value = calc.todayKey(); render(); });
+$("today").addEventListener("click", () => {
+  const today = calc.todayKey();
+  const minimum = APP_CONFIG.terms[$("term").value].startDate;
+  if (minimum && today < minimum) return;
+  $("start-date").value = today;
+  render();
+});
 $("settings").addEventListener("submit", event => event.preventDefault());
 $("settings").addEventListener("input", render);
 $("settings").addEventListener("change", render);
