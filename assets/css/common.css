@@ -5,3 +5,7 @@
 .community h2{font-size:1rem}
 .community-link{display:inline-block;max-width:100%;min-height:48px;padding:12px 14px;border-radius:8px;background:var(--pale);color:var(--green);overflow-wrap:anywhere}
 .community-link:hover{background:#e0eadd}
+
+.community-channel{margin-bottom:8px;color:var(--green);overflow-wrap:anywhere}
+.community-actions{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;margin-bottom:8px}
+.community-browser-link{display:inline-block;min-height:48px;padding:12px 0;max-width:100%;overflow-wrap:anywhere}
