@@ -6,7 +6,7 @@ const root = path.join(__dirname, '..');
 const context = vm.createContext({});
 vm.runInContext(fs.readFileSync(path.join(root,'assets/data/config.js'),'utf8') + fs.readFileSync(path.join(root,'assets/data/holidays.js'),'utf8') + ';globalThis.config=APP_CONFIG;globalThis.holidays=JAPAN_HOLIDAYS;',context);
 const c = require('../rishu-navi/calculator.js');
-const run = (times, rule='normal', holiday=0, start='2026-10-05') => c.calculateStudyTime(start, context.config.finalDeadline, times, rule, holiday, context.holidays);
+const run = (times, rule='normal', holiday=0, start='2026-10-05') => c.calculateStudyTime(start, context.config.terms["2026-3q"].finalDeadline, times, rule, holiday, context.holidays);
 let r=run(Array(7).fill(0)); assert.equal(r.totalMinutes,0); assert.equal(r.studyDays,0); assert.ok(c.calculateCourses(r.totalMinutes,context.config).every(x=>x.count===0)); console.log('A: PASS');
 r=run(Array(7).fill(120)); assert.equal(r.calendarDays,56); assert.equal(r.totalMinutes,6720); assert.equal(r.studyDays,56); console.log('B: PASS 56日・112時間');
 r=run([0,120,0,0,0,0,0]); assert.equal(r.totalMinutes,960);assert.equal(r.studyDays,8);console.log('C: PASS 月曜日8回・16時間');
@@ -21,3 +21,12 @@ assert.equal(c.parseDate('2026-02-30'),null);assert.equal(c.formatMinutes(75),'1
 assert.ok(run(Array(7).fill(120),'normal',0,'1900-01-01').error);
 assert.ok(context.holidays['2026']['2026-05-06']);assert.ok(context.holidays['2026']['2026-09-22']);
 console.log('追加: 切り捨て・無効日付・未対応年・振替休日・国民の休日 PASS');
+
+const q4 = context.config.terms["2026-4q"];
+const q4Result = c.calculateStudyTime(q4.startDate, q4.finalDeadline, Array(7).fill(120), "normal", 0, context.holidays);
+assert.equal(q4Result.calendarDays, 63);
+assert.equal(q4Result.totalMinutes, 7560);
+assert.equal(c.calculateStudyTime(q4.startDate, q4.finalDeadline, Array(7).fill(120), "off", 0, context.holidays).totalMinutes, 7200);
+assert.equal(c.calculateStudyTime("2027-02-14", q4.finalDeadline, Array(7).fill(120), "normal", 0, context.holidays).calendarDays, 1);
+assert.ok(c.calculateStudyTime("2027-02-15", q4.finalDeadline, Array(7).fill(120), "normal", 0, context.holidays).error);
+console.log("4Q: 年またぎ63日・126時間・祝日休み120時間・締切当日と締切後 PASS");

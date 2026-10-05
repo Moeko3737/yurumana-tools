@@ -38,7 +38,7 @@ function render() {
   $("holiday-output").textContent = holidayText;
   $("holiday-minutes").setAttribute("aria-valuetext", holidayText);
   $("weekly-total").textContent = calc.formatMinutes(weekly);
-  const result = calc.calculateStudyTime($("start-date").value, APP_CONFIG.finalDeadline, weekdays, rule, holidayMinutes, JAPAN_HOLIDAYS);
+  const result = calc.calculateStudyTime($("start-date").value, APP_CONFIG.terms[$("term").value].finalDeadline, weekdays, rule, holidayMinutes, JAPAN_HOLIDAYS);
   $("result-error").hidden = !result.error;
   $("valid-results").hidden = Boolean(result.error);
   if (result.error) {
@@ -47,7 +47,7 @@ function render() {
     $("live-summary").textContent = "";
     return;
   }
-  $("period").textContent = `${calc.formatDate($("start-date").value)} 〜 ${calc.formatDate(APP_CONFIG.finalDeadline)}`;
+  $("period").textContent = `${calc.formatDate($("start-date").value)} 〜 ${calc.formatDate(APP_CONFIG.terms[$("term").value].finalDeadline)}`;
   $("total-time").textContent = calc.formatMinutes(result.totalMinutes);
   $("result-weekly").textContent = calc.formatMinutes(weekly);
   $("study-days").textContent = `${result.studyDays}日`;
@@ -67,12 +67,25 @@ function render() {
 }
 buildWeekdays();
 configureSlider($("holiday-minutes"));
-const deadline = calc.parseDate(APP_CONFIG.finalDeadline);
-$("deadline").textContent = deadline ? `最終締切：${deadline.getUTCMonth() + 1}月${deadline.getUTCDate()}日（${deadline.getUTCFullYear()}年）` : "最終締切の設定を確認してください";
+Object.entries(APP_CONFIG.terms).forEach(([key, term]) => {
+  const option = document.createElement("option");
+  option.value = key;
+  option.textContent = term.label;
+  $("term").append(option);
+});
+$("term").value = APP_CONFIG.defaultTerm;
+function selectTerm() {
+  const term = APP_CONFIG.terms[$("term").value];
+  const deadline = calc.parseDate(term.finalDeadline);
+  $("deadline").textContent = deadline ? `最終締切：${deadline.getUTCMonth() + 1}月${deadline.getUTCDate()}日（${deadline.getUTCFullYear()}年）` : "最終締切の設定を確認してください";
+  $("start-date").value = term.startDate || calc.todayKey();
+  render();
+}
+$("term").addEventListener("input", selectTerm);
+$("term").addEventListener("change", selectTerm);
 $("session-count").textContent = APP_CONFIG.sessionsPerCourse;
-$("start-date").value = calc.todayKey();
 $("today").addEventListener("click", () => { $("start-date").value = calc.todayKey(); render(); });
 $("settings").addEventListener("submit", event => event.preventDefault());
 $("settings").addEventListener("input", render);
 $("settings").addEventListener("change", render);
-render();
+selectTerm();
