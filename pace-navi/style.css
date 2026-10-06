@@ -17,3 +17,37 @@ body:has(#settings-dialog[open]){overflow:hidden}
 #progress-host .course-section:not(:has(.course)){display:none}
 
 .pace-surface{background:var(--pale)}
+
+/* 日常の操作は科目から。長い一覧は目的ごとに切り替える。 */
+.intro{margin-bottom:18px}.intro p{margin-bottom:0}
+.workspace-bar{align-items:flex-start}.workspace-bar button{font-size:.875rem}
+.workspace-navigation{display:grid;grid-template-columns:1fr 1fr 1.25fr;gap:4px;border-bottom:1px solid var(--line);margin:24px 0 0;padding-bottom:8px}
+.workspace-navigation button{background:transparent;border-color:transparent;padding:10px 4px;font-size:.875rem;color:var(--muted);border-radius:8px}
+.workspace-navigation button[aria-pressed=true]{background:var(--green);color:white;font-weight:700}
+#progress-surface,#pace-surface,#outlook-surface{border:0;background:transparent;padding:24px 0;margin-bottom:16px}
+.progress-overview{color:var(--green);font-weight:600;margin-bottom:4px}
+#progress-host .course-section{border:0}
+#progress-host .course-section>summary{display:none}
+#progress-host .course-section>div{display:contents}
+#progress-host .course{padding:0;margin:12px 0;border:1px solid var(--line);border-left:4px solid var(--course-color);border-radius:10px;background:var(--surface);overflow:hidden}
+#progress-host .course-disclosure>summary{padding:16px;list-style:none;position:relative}
+#progress-host .course-disclosure>summary::-webkit-details-marker{display:none}
+#progress-host .course-top:not(.settings-only){display:block;padding-right:26px}
+#progress-host .course-top h3{font-size:1.05rem;margin-bottom:2px}
+#progress-host .course-top .tag{font-size:.75rem}
+#progress-host .course-disclosure>summary::after{content:'＋';position:absolute;right:16px;top:16px;color:var(--green)}
+#progress-host .course-disclosure[open]>summary::after{content:'−'}
+#progress-host .course-disclosure[open]>summary{border-bottom:1px solid var(--line)}
+.course-open-hint{display:block;margin-top:8px;font-size:.75rem;color:var(--muted);font-weight:400}
+.course-disclosure[open] .course-open-hint{display:none}
+#progress-host .course-disclosure> :not(summary){margin-left:16px;margin-right:16px}
+#progress-host .course-disclosure>.sessions{margin-top:16px}
+#progress-host .course-progress{font-size:.875rem;margin:10px 0 6px}
+#progress-host .progress-track{height:6px}
+#progress-host .session-button{font-size:.875rem;min-height:48px}
+#settings-dialog .course-disclosure{display:none}
+.pace-guide{margin-bottom:16px;border-bottom:1px solid var(--line)}.pace-guide>summary{font-size:.875rem;color:var(--muted);font-weight:400}
+.daily-row{background:var(--surface);border:1px solid var(--line);border-radius:8px;margin-bottom:8px;padding:16px}
+.daily-count{font-size:1.1rem;color:var(--green)}.seminar-note{font-size:.875rem;color:var(--ink);margin-top:4px}
+@media(max-width:400px){.workspace-bar{display:block}.workspace-bar button{margin-top:8px}.workspace-navigation{margin-top:16px}.daily-row{padding:12px;grid-template-columns:5.8em minmax(0,1fr)}}
+.support-info{border-top:1px solid var(--line);margin-top:24px}.support-info>summary{font-size:.875rem;color:var(--muted);font-weight:400}.support-info .community{margin-top:16px}

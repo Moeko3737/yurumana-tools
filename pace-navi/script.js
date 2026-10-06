@@ -52,12 +52,23 @@ function buildCourse(course) {
   card.innerHTML = `<div class="course-top"><h3 data-title></h3><span class="tag">${section.tag}</span></div>
     <div class="fields"><div class="field"><label for="${prefix}-name">科目名</label><input id="${prefix}-name" data-field="name" maxlength="200" value="${escapeHTML(course.name)}" placeholder="例：Webアプリケーション開発3"></div><div class="field"><label for="${prefix}-color">カラー</label><input type="color" id="${prefix}-color" data-field="color" value="${course.color}"></div>${timeMarkup}</div>
     <p class="course-progress" data-progress></p><div class="progress-track" aria-hidden="true"><div class="progress-fill"></div></div>
-    <div class="sessions" role="group" aria-label="各回の完了状態">${course.sessions.map((session, i) => `<button type="button" class="session-button ${section.videos === 6 && section.milestones.some(milestone => milestone.target === i+1) ? "break-after" : ""}" data-session="${i}" aria-pressed="${session.complete}" aria-label="第${i+1}回 ${session.complete ? "完了" : "未完了"}">${i+1}</button>`).join("")}</div>
+    <div class="sessions" role="group" aria-label="各回の完了状態">${course.sessions.map((session, i) => `<button type="button" class="session-button ${section.videos === 6 && section.milestones.some(milestone => milestone.target === i+1) ? "break-after" : ""}" data-session="${i}" aria-pressed="${session.complete}" aria-label="第${i+1}回 ${session.complete ? "完了" : "未完了"}">${i+1}回</button>`).join("")}</div>
     <p class="help progress-only">${section.videos === 6 ? `${section.milestones.map(milestone => milestone.target+"回").join("・")}が締切の区切りです。` : ""}数字を押すと、その回の完了・未完了を切り替えます。</p>
     <details class="progress-only"><summary>完了数をまとめて設定</summary><p class="help">1〜N回を完了扱いにします。既存の進捗や詳細記録を変更する場合は確認します。</p><div class="bulk-row"><div class="field"><label for="${prefix}-bulk">完了数（0〜${section.totalSessions}）</label><input type="number" id="${prefix}-bulk" min="0" max="${section.totalSessions}" step="1" inputmode="numeric" value="${engine.countCompleted(course)}"></div><button type="button" data-bulk>設定する</button></div><p class="help" data-bulk-message role="status"></p></details>
     ${section.videos ? detailedSessions(course, prefix) : seminarExceptions(course, prefix)}
     <p data-course-message class="course-message"></p>
     <button type="button" class="remove-course settings-only" data-delete>この科目を削除</button>`;
+  // 設定には編集用の見出し、本画面には科目ごとの開閉欄を表示する。
+  const top = card.querySelector(".course-top");
+  const settingsTop = top.cloneNode(true);
+  settingsTop.classList.add("settings-only");
+  card.prepend(settingsTop);
+  const disclosure = node("details", undefined, "course-disclosure progress-only");
+  const summary = node("summary");
+  summary.append(top, card.querySelector("[data-progress]"), card.querySelector(".progress-track"), node("span", "開いてチェック", "course-open-hint"));
+  disclosure.append(summary);
+  Array.from(card.children).filter(child => child.classList.contains("sessions") || child.classList.contains("progress-only") || child.hasAttribute("data-course-message")).forEach(child => disclosure.append(child));
+  card.append(disclosure);
   return card;
 }
 function detailedSessions(course, prefix) {
@@ -77,7 +88,7 @@ function updateCourseSummaries() {
     const status = engine.courseStatus(course, state.settings.startDate, config);
     card.classList.toggle("finished", status.finished);
     card.style.setProperty("--course-color", course.color);
-    card.querySelector("[data-title]").textContent = course.name || "科目名を入力してください";
+    card.querySelectorAll("[data-title]").forEach(title => { title.textContent = course.name || "科目名を入力してください"; });
     card.querySelector("[data-progress]").textContent = `${status.complete} / ${section.totalSessions}${status.finished ? "　✓ 完了" : ""}`;
     card.querySelector(".progress-fill").style.width = `${status.complete / section.totalSessions * 100}%`;
     card.querySelectorAll("[data-session]").forEach(button => {
@@ -184,7 +195,7 @@ function renderResults() {
     result.groups.forEach(group=>deadlines.append(node("p",`${dates.formatDate(group.deadline)} ${group.type === "hard" ? "最終締切" : "途中締切"}：${group.count}本・約${dates.formatMinutes(group.minutes)}／配置${group.placed}本${group.unplaced ? `・不足${group.unplaced}本（約${dates.formatMinutes(group.missingMinutes)}）` : ""}${group.release>result.start ? `。${dates.formatDate(group.release)}から学習` : ""}`,"deadline-line")));
     container.append(deadlines);
     pace.append(node("p", `${dates.formatDate(result.start)} 〜 ${dates.formatDate(result.end)}`, "help"));
-    if (result.unplaced) pace.append(node("p", `未配置の作業が${result.unplaced}本あります。下の「締切までの見通し」で不足量を確認できます。`, "warning"));
+    if (result.unplaced) pace.append(node("p", `未配置の作業が${result.unplaced}本あります。「締切の見通し」で不足量を確認できます。`, "warning"));
     pace.append(buildDayList(result.days.slice(0,7)));
     if(result.days.length>7){const more=node("details",undefined,"more-days");more.open=expanded;more.append(node("summary",`続きを見る・閉じる（残り${result.days.length-7}日）`),buildDayList(result.days.slice(7)));pace.append(more);}
     pace.append(node("p","どの科目を進めるか迷ったら、次の締切までの残り回数が多い科目や、進捗が遅れている科目から進めるのがおすすめです。","help"));
@@ -288,6 +299,9 @@ function markSetupComplete() {
 }
 function updateWorkspaceSummary() {
   $("progress-empty").hidden = state.courses.length > 0;
+  const completed = state.courses.reduce((sum, course) => sum + engine.countCompleted(course), 0);
+  const total = state.courses.reduce((sum, course) => sum + config.sections[course.type].totalSessions, 0);
+  $("progress-overview").textContent = state.courses.length ? `${state.courses.length}科目 · ${completed} / ${total}回 完了` : "まずは科目を登録しましょう";
   $("current-settings").textContent = `計算開始：${dates.formatDate(state.settings.startDate) || "未設定"} · 通常週：${dates.formatMinutes(state.settings.weekdays.reduce((sum, minutes) => sum + minutes, 0))}`;
 }
 function updateDialogControls() {
@@ -338,7 +352,17 @@ function validateSetupCourses() {
   }
   return true;
 }
+function prepareProgressView() {
+  document.querySelectorAll("#progress-host .course-section").forEach(section => { section.open = true; });
+}
+function showWorkspaceView(view) {
+  const panels = { progress: "progress-surface", pace: "pace-surface", outlook: "outlook-surface" };
+  Object.entries(panels).forEach(([key, id]) => { $(id).hidden = key !== view; });
+  document.querySelectorAll("[data-view]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.view === view)));
+}
 function initializeWorkspace() {
+  prepareProgressView();
+  document.querySelectorAll("[data-view]").forEach(button => button.addEventListener("click", () => showWorkspaceView(button.dataset.view)));
   updateWorkspaceSummary();
   $("open-settings").addEventListener("click", () => openSettings());
   $("register-courses").addEventListener("click", () => openSettings());
@@ -347,6 +371,7 @@ function initializeWorkspace() {
   $("settings-dialog").addEventListener("close", () => {
     document.querySelectorAll("#course-sections details").forEach(details => { details.open = false; });
     $("progress-host").append($("course-sections"));
+    prepareProgressView();
     updateWorkspaceSummary();
     $("open-settings").focus();
   });

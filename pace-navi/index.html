@@ -19,29 +19,31 @@
 <a class="skip" href="#main">本文へ</a>
 <header><a class="brand" href="../">← ゆるまなTools</a></header>
 <main id="main">
-<div class="intro"><h1>ゆるまなペースナビ 🌱</h1><p>締切まで、どのくらいのペースで進めよう？</p><p class="muted">履修中の科目と進捗、使える時間を登録すると、1日ごとのおすすめ本数が分かります。どの科目を進めるかは、自分で選べます。</p></div>
+<div class="intro"><h1>ゆるまなペースナビ 🌱</h1><p>進んだ分をチェック。次のペースを確認。</p></div>
 <noscript><p class="warning">JavaScriptを有効にしてご利用ください。</p></noscript>
-<p class="help">入力はこのブラウザに自動保存されます。科目・学習時間の編集やバックアップは「設定」から行えます。</p>
+
 <p id="storage-message" class="warning" role="status" hidden></p>
-<div class="workspace-bar"><p id="current-settings" class="help"></p><button type="button" id="open-settings" aria-haspopup="dialog">設定</button></div>
+<div class="workspace-bar"><p id="current-settings" class="help"></p><button type="button" id="open-settings" aria-haspopup="dialog">科目・時間の設定</button></div>
+<nav class="workspace-navigation" aria-label="ペースナビの画面"><button type="button" data-view="progress" aria-pressed="true" aria-controls="progress-surface">進捗</button><button type="button" data-view="pace" aria-pressed="false" aria-controls="pace-surface">学習ペース</button><button type="button" data-view="outlook" aria-pressed="false" aria-controls="outlook-surface">締切の見通し</button></nav>
 <section class="surface" id="progress-surface" aria-labelledby="courses-heading">
-<h2 id="courses-heading">進捗管理</h2>
-<p class="help">数字を押すと完了・未完了を切り替えます。動画・レポートの詳細は必要なときに開けます。</p>
+<h2 id="courses-heading">科目の進み具合</h2><p id="progress-overview" class="progress-overview"></p>
+<p class="help">科目を開いて、終わった回をチェックしましょう。変更は自動保存されます。</p>
 <p id="progress-empty" hidden>まだ科目がありません。<button type="button" id="register-courses">科目を登録する</button></p>
 <div id="progress-host"><div id="course-sections"></div></div>
 </section>
-<section class="surface pace-surface" aria-labelledby="pace-heading">
+<section class="surface pace-surface" id="pace-surface" aria-labelledby="pace-heading" hidden>
 <h2 id="pace-heading">おすすめの学習ペース</h2>
 <fieldset class="mode-switch"><legend class="sr-only">計算モード</legend><label><input type="radio" name="pace-mode" value="next">次の締切まで</label><label><input type="radio" name="pace-mode" value="final">最終締切まで</label></fieldset>
-<p class="unit-note">1本＝オンデマンド・pixiv・ライブ科目の授業1回分の目安です。演習は含みません。科目によって実際の学習時間は異なります。</p>
+<details class="pace-guide"><summary>本数の見方・演習について</summary><p class="unit-note">1本＝オンデマンド・pixiv・ライブ科目の授業1回分の目安です。演習は含みません。科目によって実際の学習時間は異なります。</p>
 <p class="help">演習は、祝日や自主学習時間が0分の日にも表示します。休講日として登録した日と、完了した演習科目は除きます。</p>
-<div id="daily-pace"></div>
+</details><div id="daily-pace"></div>
 </section>
-<section class="surface result-surface" aria-labelledby="result-heading">
+<section class="surface result-surface" id="outlook-surface" aria-labelledby="result-heading" hidden>
 <h2 id="result-heading">締切までの見通し</h2>
 <div id="results"></div>
 <p id="result-live" class="sr-only" aria-live="polite" aria-atomic="true"></p>
 </section>
+<details class="support-info"><summary>使い方・注意事項・ゆるまなについて</summary>
 <section class="notes"><h2>実際の学習予定を組みたい方へ</h2><p>この結果は「1日にどのくらい進めるとよいか」の目安です。「この日はWebアプリ、この日は心理学」のように具体的な予定を組みたい場合は、履修スケジュール管理表をご利用ください。</p><a class="plain-link" href="https://moeko3737.github.io/zen-study-planner/" target="_blank" rel="noopener noreferrer">履修スケジュール管理表を開く →</a></section>
 <section class="notes"><h2>使う前に知っておきたいこと</h2><p>学生個人が制作した非公式ツールです。結果は学習計画の目安で、成績や単位取得を保証するものではありません。科目ごとの実際の負荷は異なります。</p><p>途中締切を過ぎても未完了分を次の目標へ含めますが、成績に影響する場合があります。最終締切後の未完了分はおすすめペースに含めません。正式な締切・提出条件・授業情報は、必ず<a href="https://zen.ac.jp/">ZEN大学の公式情報</a>と各科目の案内で確認してください。</p><p>演習は曜日と休講日だけを表示します。各回の実施日や冬季休業中の授業有無は、授業の案内をご確認ください。</p></section>
 <section class="community" aria-labelledby="community-heading">
@@ -56,6 +58,7 @@
 <p class="help">アプリが開かない場合は「ブラウザで見る」をご利用ください。</p>
 </section>
 
+</details>
 </main>
 <footer><a href="../">← ゆるまなTools</a><p>学びを、ちょっとラクに。</p></footer>
 
