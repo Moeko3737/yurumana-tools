@@ -54,8 +54,7 @@ function buildCourse(course) {
     <p class="course-progress" data-progress></p><div class="progress-track" aria-hidden="true"><div class="progress-fill"></div></div>
     <div class="sessions" role="group" aria-label="各回の完了状態">${course.sessions.map((session, i) => `<button type="button" class="session-button ${section.videos === 6 && section.milestones.some(milestone => milestone.target === i+1) ? "break-after" : ""}" data-session="${i}" aria-pressed="${session.complete}" aria-label="第${i+1}回 ${session.complete ? "完了" : "未完了"}">${i+1}回</button>`).join("")}</div>
     <p class="help progress-only">${section.videos === 6 ? `${section.milestones.map(milestone => milestone.target+"回").join("・")}が締切の区切りです。` : ""}数字を押すと、その回の完了・未完了を切り替えます。</p>
-    <details class="progress-only"><summary>完了数をまとめて設定</summary><p class="help">1〜N回を完了扱いにします。既存の進捗や詳細記録を変更する場合は確認します。</p><div class="bulk-row"><div class="field"><label for="${prefix}-bulk">完了数（0〜${section.totalSessions}）</label><input type="number" id="${prefix}-bulk" min="0" max="${section.totalSessions}" step="1" inputmode="numeric" value="${engine.countCompleted(course)}"></div><button type="button" data-bulk>設定する</button></div><p class="help" data-bulk-message role="status"></p></details>
-    ${section.videos ? detailedSessions(course, prefix) : seminarExceptions(course, prefix)}
+    ${course.type === "seminar" ? seminarExceptions(course, prefix) : ""}
     <p data-course-message class="course-message"></p>
     <button type="button" class="remove-course settings-only" data-delete>この科目を削除</button>`;
   // 設定には編集用の見出し、本画面には科目ごとの開閉欄を表示する。
@@ -70,9 +69,6 @@ function buildCourse(course) {
   Array.from(card.children).filter(child => child.classList.contains("sessions") || child.classList.contains("progress-only") || child.hasAttribute("data-course-message")).forEach(child => disclosure.append(child));
   card.append(disclosure);
   return card;
-}
-function detailedSessions(course, prefix) {
-  return `<details class="details-progress progress-only"><summary>動画・確認レポートの詳細（任意）</summary><p class="help">確認レポートを提出済みにすると、その回の動画もすべて視聴済みになります。動画のチェックを外すと提出済み・完了も解除します。</p>${course.sessions.map((session,i) => `<details class="session-detail"><summary>第${i+1}回 <span data-detail-status="${i}"></span></summary><p>動画</p><div class="checks">${session.videos.map((watched,v) => `<label class="check-label video-label" for="${prefix}-video-${i}-${v}"><input id="${prefix}-video-${i}-${v}" type="checkbox" data-video-session="${i}" data-video="${v}" ${watched ? "checked" : ""}>${session.videos.length === 1 ? "視聴済み" : v+1}</label>`).join("")}</div><label class="check-label" for="${prefix}-report-${i}"><input id="${prefix}-report-${i}" type="checkbox" data-report="${i}" ${session.report ? "checked" : ""}>確認レポート提出済み</label></details>`).join("")}</details>`;
 }
 function seminarExceptions(course, prefix) {
   return `<details class="settings-only"><summary>休講日を設定（任意）</summary><div class="field"><label for="${prefix}-cancel">休講日</label><div class="date-row"><input type="date" id="${prefix}-cancel"><button type="button" data-add-cancel>休講日を追加</button></div><p class="help" data-cancel-message role="status"></p><ul class="cancellations"></ul></div></details>`;
@@ -94,12 +90,6 @@ function updateCourseSummaries() {
     card.querySelectorAll("[data-session]").forEach(button => {
       const index = Number(button.dataset.session), complete = course.sessions[index].complete;
       button.setAttribute("aria-pressed", String(complete)); button.setAttribute("aria-label", `第${index+1}回 ${complete ? "完了" : "未完了"}`);
-    });
-    card.querySelectorAll("[data-video]").forEach(input => input.checked = course.sessions[Number(input.dataset.videoSession)].videos[Number(input.dataset.video)]);
-    card.querySelectorAll("[data-report]").forEach(input => input.checked = course.sessions[Number(input.dataset.report)].report);
-    card.querySelectorAll("[data-detail-status]").forEach(span => {
-      const session = course.sessions[Number(span.dataset.detailStatus)];
-      span.textContent = session.complete ? "完了" : `動画${session.videos.filter(Boolean).length}/${session.videos.length}・レポート未提出`;
     });
     const message = card.querySelector("[data-course-message]");
     message.classList.toggle("alert", status.expired || status.missed.length > 0);
@@ -181,7 +171,7 @@ function renderResults() {
     appendMetric(metrics,"確保できる学習時間",dates.formatMinutes(result.availableMinutes));
     appendMetric(metrics,"1本あたりの目安",`約${Math.round(result.average)}分`);
     appendMetric(metrics,"配置できた本数",`${result.placed}本`);container.append(metrics);
-    container.append(node("p","必要回数で加重平均しています。詳細の動画チェックによる部分完了は時間から差し引きません。", "help"));
+    container.append(node("p","科目ごとの想定学習時間を、残り回数で加重平均しています。", "help"));
     if(result.unplaced) {
       const hard = result.groups.some(group=>group.type === "hard" && group.unplaced>0);
       container.append(node("p",hard ? "⚠️ 最終締切までの学習時間が不足しています" : "📝 次の締切までの配分を見直すと安心です", "status-message"));
@@ -229,9 +219,7 @@ $("course-sections").addEventListener("input",event=>{
   } else if(field==="custom-minutes"){
     const number=Number(input.value);course.minutes=input.value!=="" && Number.isSafeInteger(number) && number>0 && number<=1000000 ? number : null;
     input.setAttribute("aria-invalid",String(course.minutes===null));input.closest(".field").querySelector("[data-time-error]").hidden=course.minutes!==null;
-  } else if(input.dataset.report!==undefined)engine.setReport(course.sessions[Number(input.dataset.report)],input.checked);
-  else if(input.dataset.video!==undefined)engine.setVideo(course.sessions[Number(input.dataset.videoSession)],Number(input.dataset.video),input.checked);
-  else return;
+  } else return;
   saveAndRender();
 });
 $("course-sections").addEventListener("click",event=>{
@@ -242,13 +230,8 @@ $("course-sections").addEventListener("click",event=>{
   }
   const course=getCourse(button);if(!course)return;const card=button.closest(".course");
   if(button.dataset.session!==undefined){const session=course.sessions[Number(button.dataset.session)];engine.setSessionComplete(session,!session.complete);}
-  else if(button.hasAttribute("data-bulk")){
-    const input=document.getElementById(`${course.id}-bulk`),count=Number(input.value),message=card.querySelector("[data-bulk-message]");
-    if(input.value==="" || !Number.isInteger(count) || count<0 || count>course.sessions.length){message.textContent=`0〜${course.sessions.length}の整数を入力してください。`;return;}
-    if(engine.bulkWouldOverwrite(course,count) && !confirm("既存の進捗・動画チェック・確認レポートを、1〜指定回数の完了状態で上書きします。よろしいですか？"))return;
-    engine.setBulk(course,count);message.textContent="完了数を設定しました。";
-  } else if(button.hasAttribute("data-delete")){
-    if(!confirm(`「${course.name || "名称未入力の科目"}」を削除しますか？進捗・詳細記録も削除されます。`))return;
+  else if(button.hasAttribute("data-delete")){
+    if(!confirm(`「${course.name || "名称未入力の科目"}」を削除しますか？進捗も削除されます。`))return;
     state.courses=state.courses.filter(item=>item.id!==course.id);card.remove();$(`section-${course.type}`).querySelector("[data-add]").focus();
   } else if(button.hasAttribute("data-add-cancel")){
     const input=document.getElementById(`${course.id}-cancel`),message=card.querySelector("[data-cancel-message]");
