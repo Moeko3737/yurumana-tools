@@ -23,6 +23,7 @@ function saveAndRender() {
   if (!saveBlocked && dates.parseDate(state.settings.startDate)) storageMessage(PaceStorage.save(state));
   updateCourseSummaries();
   renderResults();
+  updateWorkspaceSummary();
 }
 function getCourse(element) { return state.courses.find(course => course.id === element.closest(".course")?.dataset.id); }
 function buildSections() {
@@ -52,18 +53,18 @@ function buildCourse(course) {
     <div class="fields"><div class="field"><label for="${prefix}-name">科目名</label><input id="${prefix}-name" data-field="name" maxlength="200" value="${escapeHTML(course.name)}" placeholder="例：Webアプリケーション開発3"></div><div class="field"><label for="${prefix}-color">カラー</label><input type="color" id="${prefix}-color" data-field="color" value="${course.color}"></div>${timeMarkup}</div>
     <p class="course-progress" data-progress></p><div class="progress-track" aria-hidden="true"><div class="progress-fill"></div></div>
     <div class="sessions" role="group" aria-label="各回の完了状態">${course.sessions.map((session, i) => `<button type="button" class="session-button ${section.videos === 6 && section.milestones.some(milestone => milestone.target === i+1) ? "break-after" : ""}" data-session="${i}" aria-pressed="${session.complete}" aria-label="第${i+1}回 ${session.complete ? "完了" : "未完了"}">${i+1}</button>`).join("")}</div>
-    <p class="help">${section.videos === 6 ? `${section.milestones.map(milestone => milestone.target+"回").join("・")}が締切の区切りです。` : ""}数字を押すと、その回の完了・未完了を切り替えます。</p>
-    <details><summary>完了数をまとめて設定</summary><p class="help">1〜N回を完了扱いにします。既存の進捗や詳細記録を変更する場合は確認します。</p><div class="bulk-row"><div class="field"><label for="${prefix}-bulk">完了数（0〜${section.totalSessions}）</label><input type="number" id="${prefix}-bulk" min="0" max="${section.totalSessions}" step="1" inputmode="numeric" value="${engine.countCompleted(course)}"></div><button type="button" data-bulk>設定する</button></div><p class="help" data-bulk-message role="status"></p></details>
+    <p class="help progress-only">${section.videos === 6 ? `${section.milestones.map(milestone => milestone.target+"回").join("・")}が締切の区切りです。` : ""}数字を押すと、その回の完了・未完了を切り替えます。</p>
+    <details class="progress-only"><summary>完了数をまとめて設定</summary><p class="help">1〜N回を完了扱いにします。既存の進捗や詳細記録を変更する場合は確認します。</p><div class="bulk-row"><div class="field"><label for="${prefix}-bulk">完了数（0〜${section.totalSessions}）</label><input type="number" id="${prefix}-bulk" min="0" max="${section.totalSessions}" step="1" inputmode="numeric" value="${engine.countCompleted(course)}"></div><button type="button" data-bulk>設定する</button></div><p class="help" data-bulk-message role="status"></p></details>
     ${section.videos ? detailedSessions(course, prefix) : seminarExceptions(course, prefix)}
     <p data-course-message class="course-message"></p>
-    <button type="button" class="remove-course" data-delete>この科目を削除</button>`;
+    <button type="button" class="remove-course settings-only" data-delete>この科目を削除</button>`;
   return card;
 }
 function detailedSessions(course, prefix) {
-  return `<details class="details-progress"><summary>動画・確認レポートの詳細（任意）</summary><p class="help">確認レポートを提出済みにすると、その回の動画もすべて視聴済みになります。動画のチェックを外すと提出済み・完了も解除します。</p>${course.sessions.map((session,i) => `<details class="session-detail"><summary>第${i+1}回 <span data-detail-status="${i}"></span></summary><p>動画</p><div class="checks">${session.videos.map((watched,v) => `<label class="check-label video-label" for="${prefix}-video-${i}-${v}"><input id="${prefix}-video-${i}-${v}" type="checkbox" data-video-session="${i}" data-video="${v}" ${watched ? "checked" : ""}>${session.videos.length === 1 ? "視聴済み" : v+1}</label>`).join("")}</div><label class="check-label" for="${prefix}-report-${i}"><input id="${prefix}-report-${i}" type="checkbox" data-report="${i}" ${session.report ? "checked" : ""}>確認レポート提出済み</label></details>`).join("")}</details>`;
+  return `<details class="details-progress progress-only"><summary>動画・確認レポートの詳細（任意）</summary><p class="help">確認レポートを提出済みにすると、その回の動画もすべて視聴済みになります。動画のチェックを外すと提出済み・完了も解除します。</p>${course.sessions.map((session,i) => `<details class="session-detail"><summary>第${i+1}回 <span data-detail-status="${i}"></span></summary><p>動画</p><div class="checks">${session.videos.map((watched,v) => `<label class="check-label video-label" for="${prefix}-video-${i}-${v}"><input id="${prefix}-video-${i}-${v}" type="checkbox" data-video-session="${i}" data-video="${v}" ${watched ? "checked" : ""}>${session.videos.length === 1 ? "視聴済み" : v+1}</label>`).join("")}</div><label class="check-label" for="${prefix}-report-${i}"><input id="${prefix}-report-${i}" type="checkbox" data-report="${i}" ${session.report ? "checked" : ""}>確認レポート提出済み</label></details>`).join("")}</details>`;
 }
 function seminarExceptions(course, prefix) {
-  return `<details><summary>休講日を設定（任意）</summary><div class="field"><label for="${prefix}-cancel">休講日</label><div class="date-row"><input type="date" id="${prefix}-cancel"><button type="button" data-add-cancel>休講日を追加</button></div><p class="help" data-cancel-message role="status"></p><ul class="cancellations"></ul></div></details>`;
+  return `<details class="settings-only"><summary>休講日を設定（任意）</summary><div class="field"><label for="${prefix}-cancel">休講日</label><div class="date-row"><input type="date" id="${prefix}-cancel"><button type="button" data-add-cancel>休講日を追加</button></div><p class="help" data-cancel-message role="status"></p><ul class="cancellations"></ul></div></details>`;
 }
 function updateCourseSummaries() {
   Object.keys(config.sections).forEach(type => {
@@ -261,13 +262,111 @@ $("import").addEventListener("change",async event=>{
     if(file.size>5*1024*1024)throw new Error("バックアップは5MB以下のJSONファイルを選んでください。");
     const imported=PaceStorage.validate(JSON.parse(await file.text()),config);
     if(!confirm("現在の全データを、このバックアップの内容で置き換えます。よろしいですか？"))return;
-    state=imported;saveBlocked=false;buildSections();initializeSettings();saveAndRender();$("backup-message").textContent="バックアップから復元しました。";
+    state=imported;saveBlocked=false;buildSections();initializeSettings();saveAndRender();markSetupComplete();setupMode=false;updateDialogControls();$("backup-message").textContent="バックアップから復元しました。設定を閉じると進捗とおすすめペースを確認できます。";
   }catch(error){$("backup-message").textContent=error instanceof SyntaxError ? "JSONを読み込めませんでした。元のデータは変更していません。" : error.message;}
   finally{event.target.value="";}
 });
 $("reset").addEventListener("click",()=>{
   if(!confirm("登録科目・進捗・学習時間など、ペースナビの全データを削除します。必要なら先にバックアップしてください。リセットしますか？"))return;
-  state=PaceStorage.defaults();saveBlocked=false;buildSections();initializeSettings();saveAndRender();$("backup-message").textContent="ペースナビのデータをリセットしました。";
+  state=PaceStorage.defaults();saveBlocked=false;buildSections();initializeSettings();saveAndRender();try{localStorage.removeItem(SETUP_KEY);}catch{} setupMode=true;showSettingsPanel("courses");$("backup-message").textContent="ペースナビのデータをリセットしました。";
 });
 $("q4-start-help").textContent = config.q4Start ? `4Qの作業は${dates.formatDate(config.q4Start)}以降に配分します。` : "4Qの作業は3Q最終締切より後に配分します。正式な授業開始日は大学の案内で確認してください。";
 buildSections();initializeSettings();storageMessage(loaded.error);renderResults();
+
+
+// 初回案内の完了状態は既存の学習データとは別に保存する。
+const SETUP_KEY = "yurumana-pace-setup-v1";
+let setupMode = false;
+let currentPanel = "courses";
+function markSetupComplete() {
+  try { localStorage.setItem(SETUP_KEY, "complete"); } catch { /* 学習データのバックアップは引き続き使える。 */ }
+}
+function updateWorkspaceSummary() {
+  $("progress-empty").hidden = state.courses.length > 0;
+  $("current-settings").textContent = `計算開始：${dates.formatDate(state.settings.startDate) || "未設定"} · 通常週：${dates.formatMinutes(state.settings.weekdays.reduce((sum, minutes) => sum + minutes, 0))}`;
+}
+function updateDialogControls() {
+  $("setup-step").hidden = !setupMode;
+  $("setup-description").hidden = !setupMode;
+  $("settings-navigation").hidden = setupMode;
+  $("restore-in-setup").hidden = !setupMode;
+  $("setup-back").hidden = !setupMode || currentPanel !== "time";
+  $("close-settings").textContent = setupMode ? "あとで設定" : "閉じる";
+  $("close-settings").setAttribute("aria-label", setupMode ? "初回設定をあとで行う" : "設定を閉じる");
+  $("settings-heading").textContent = setupMode ? (currentPanel === "time" ? "勉強できる時間を設定" : currentPanel === "data" ? "バックアップを復元" : "科目を登録") : "設定";
+  $("setup-step").textContent = currentPanel === "time" ? "はじめの設定 · 2 / 2" : "はじめの設定 · 1 / 2";
+  $("setup-description").textContent = currentPanel === "time" ? "普段の1日に、自主学習へ使えそうな時間を設定しましょう。0分のままでも始められます。" : "まずは履修している科目を登録しましょう。あとから設定で変更できます。";
+  $("settings-done").textContent = setupMode ? (currentPanel === "courses" ? "次へ：学習時間を設定" : currentPanel === "time" ? "登録して始める" : "科目登録に戻る") : "設定を閉じる";
+}
+function showSettingsPanel(panel) {
+  currentPanel = panel;
+  ["courses", "time", "data"].forEach(key => $("settings-" + key).hidden = key !== panel);
+  document.querySelectorAll("[data-panel]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.panel === panel)));
+  $("settings-error").hidden = true;
+  updateDialogControls();
+  $("settings-dialog").scrollTop = 0;
+}
+function openSettings(panel = "courses", firstRun = false) {
+  setupMode = firstRun;
+  $("settings-course-host").append($("course-sections"));
+  showSettingsPanel(panel);
+  $("settings-dialog").showModal();
+}
+function closeSettings() {
+  if (setupMode) markSetupComplete();
+  $("settings-dialog").close();
+}
+function validateSetupCourses() {
+  const invalid = state.courses.find(course => !course.name.trim() || (course.type !== "seminar" && (!Number.isSafeInteger(course.minutes) || course.minutes <= 0)));
+  if (!state.courses.length || invalid) {
+    $("settings-error").textContent = !state.courses.length ? "科目を追加してください。今は登録しない場合は「あとで設定」で閉じられます。" : "科目名と、正の整数の想定学習時間を入力してください。";
+    $("settings-error").hidden = false;
+    if (invalid) {
+      const card = document.querySelector(`.course[data-id="${invalid.id}"]`);
+      card.closest(".course-section").open = true;
+      card.querySelector(!invalid.name.trim() ? '[data-field="name"]' : '[data-field="custom-minutes"]').focus();
+    }
+    return false;
+  }
+  return true;
+}
+function initializeWorkspace() {
+  updateWorkspaceSummary();
+  $("open-settings").addEventListener("click", () => openSettings());
+  $("register-courses").addEventListener("click", () => openSettings());
+  $("close-settings").addEventListener("click", closeSettings);
+  $("settings-dialog").addEventListener("cancel", () => { if (setupMode) markSetupComplete(); });
+  $("settings-dialog").addEventListener("close", () => {
+    $("progress-host").append($("course-sections"));
+    updateWorkspaceSummary();
+    $("open-settings").focus();
+  });
+  $("settings-navigation").addEventListener("click", event => {
+    const button = event.target.closest("[data-panel]");
+    if (button) showSettingsPanel(button.dataset.panel);
+  });
+  $("restore-in-setup").addEventListener("click", () => showSettingsPanel("data"));
+  $("setup-back").addEventListener("click", () => showSettingsPanel("courses"));
+  $("settings-done").addEventListener("click", () => {
+    if (!setupMode) { closeSettings(); return; }
+    if (currentPanel === "data") { showSettingsPanel("courses"); return; }
+    if (currentPanel === "courses") {
+      if (validateSetupCourses()) showSettingsPanel("time");
+      return;
+    }
+    if (!dates.parseDate(state.settings.startDate)) {
+      $("settings-error").textContent = "有効な計算開始日を選んでください。";
+      $("settings-error").hidden = false;
+      $("start-date").focus();
+      return;
+    }
+    markSetupComplete(); closeSettings();
+  });
+  let complete = false;
+  try { complete = localStorage.getItem(SETUP_KEY) === "complete"; } catch { /* 初回案内は使える。 */ }
+  // 既存ユーザーは登録データをそのまま使い、新しい初回案内を出さない。
+  if (!complete && state.courses.length === 0 && !saveBlocked) openSettings("courses", true);
+  else if (state.courses.length > 0) markSetupComplete();
+}
+
+initializeWorkspace();

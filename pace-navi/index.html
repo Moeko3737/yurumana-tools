@@ -21,36 +21,23 @@
 <main id="main">
 <div class="intro"><h1>ゆるまなペースナビ 🌱</h1><p>締切まで、どのくらいのペースで進めよう？</p><p class="muted">履修中の科目と進捗、使える時間を登録すると、1日ごとのおすすめ本数が分かります。どの科目を進めるかは、自分で選べます。</p></div>
 <noscript><p class="warning">JavaScriptを有効にしてご利用ください。</p></noscript>
-<p class="help">入力はこのブラウザに自動保存されます。別の端末へ移すときは、下部のJSONバックアップをご利用ください。</p>
+<p class="help">入力はこのブラウザに自動保存されます。科目・学習時間の編集やバックアップは「設定」から行えます。</p>
 <p id="storage-message" class="warning" role="status" hidden></p>
-<section class="surface" aria-labelledby="courses-heading">
-<h2 id="courses-heading">1. 科目と進捗を登録</h2>
-<p class="help">科目の区分を開いて追加してください。数字のボタンで各回を完了にできます。動画・確認レポートの詳細記録は任意です。</p>
-<div id="course-sections"></div>
-</section>
-<section class="surface" aria-labelledby="time-heading">
-<h2 id="time-heading">2. 自分で学習に使える時間</h2>
-<p class="help">演習授業の時間とは別の、自主学習に使える時間を設定してください。演習の授業時間はここから差し引きません。</p>
-<div class="field"><label for="start-date">計算開始日</label><div class="date-row"><input type="date" id="start-date" required><button type="button" id="today">今日に戻す</button></div><p class="help">開始日と締切当日を含めて計算します。<span id="q4-start-help"></span></p></div>
-<div id="weekday-inputs"></div>
-<p class="week-total">通常週の学習可能時間 <strong id="weekly-total">0分</strong></p>
-<fieldset class="holiday-rules"><legend>祝日の過ごし方</legend>
-<label class="radio"><input type="radio" name="holiday-rule" value="normal">普段どおり</label>
-<label class="radio"><input type="radio" name="holiday-rule" value="off">祝日は勉強しない</label>
-<label class="radio"><input type="radio" name="holiday-rule" value="custom">祝日は別の時間にする</label>
-</fieldset>
-<div id="holiday-custom" hidden><div class="slider-label"><label for="holiday-minutes">祝日の学習時間</label><output id="holiday-output" for="holiday-minutes">お休み</output></div><input type="range" id="holiday-minutes" min="0" max="480" step="15"></div>
-<p class="help">振替休日・国民の休日も含みます。冬季休業は自動的な休みにはなりません。</p>
+<div class="workspace-bar"><p id="current-settings" class="help"></p><button type="button" id="open-settings" aria-haspopup="dialog">設定</button></div>
+<section class="surface" id="progress-surface" aria-labelledby="courses-heading">
+<h2 id="courses-heading">進捗管理</h2>
+<p class="help">数字を押すと完了・未完了を切り替えます。動画・レポートの詳細は必要なときに開けます。</p>
+<p id="progress-empty" hidden>まだ科目がありません。<button type="button" id="register-courses">科目を登録する</button></p>
+<div id="progress-host"><div id="course-sections"></div></div>
 </section>
 <section class="surface result-surface" aria-labelledby="result-heading">
-<h2 id="result-heading">3. 締切までのペース</h2>
+<h2 id="result-heading">おすすめペース</h2>
 <fieldset class="mode-switch"><legend class="sr-only">計算モード</legend><label><input type="radio" name="pace-mode" value="next">次の締切まで</label><label><input type="radio" name="pace-mode" value="final">最終締切まで</label></fieldset>
 <p class="unit-note">1本＝オンデマンド・pixiv・ライブ科目の授業1回分の目安です。演習は含みません。科目によって実際の学習時間は異なります。</p>
 <div id="results"></div>
 <p id="result-live" class="sr-only" aria-live="polite" aria-atomic="true"></p>
 </section>
 <section class="notes"><h2>実際の学習予定を組みたい方へ</h2><p>この結果は「1日にどのくらい進めるとよいか」の目安です。「この日はWebアプリ、この日は心理学」のように具体的な予定を組みたい場合は、履修スケジュール管理表をご利用ください。</p><a class="plain-link" href="https://moeko3737.github.io/zen-study-planner/" target="_blank" rel="noopener noreferrer">履修スケジュール管理表を開く →</a></section>
-<section class="surface backups" aria-labelledby="backup-heading"><h2 id="backup-heading">データのバックアップ</h2><p class="help">データは端末・ブラウザごとに保存されます。ブラウザのデータ削除に備えて、ときどき書き出しておくと安心です。</p><div class="actions"><button type="button" id="export">バックアップを書き出す</button><label class="file-label" for="import">バックアップを読み込む<input id="import" type="file" accept=".json,application/json"></label></div><button type="button" id="reset" class="text-button">全データをリセット</button><p id="backup-message" role="status" class="help"></p></section>
 <section class="notes"><h2>使う前に知っておきたいこと</h2><p>学生個人が制作した非公式ツールです。結果は学習計画の目安で、成績や単位取得を保証するものではありません。科目ごとの実際の負荷は異なります。</p><p>途中締切を過ぎても未完了分を次の目標へ含めますが、成績に影響する場合があります。最終締切後の未完了分はおすすめペースに含めません。正式な締切・提出条件・授業情報は、必ず<a href="https://zen.ac.jp/">ZEN大学の公式情報</a>と各科目の案内で確認してください。</p><p>演習は曜日と休講日だけを表示します。各回の実施日や冬季休業中の授業有無は、授業の案内をご確認ください。</p></section>
 <section class="community" aria-labelledby="community-heading">
 <h2 id="community-heading">🌱 ゆるまなについて</h2>
@@ -66,4 +53,32 @@
 
 </main>
 <footer><a href="../">← ゆるまなTools</a><p>学びを、ちょっとラクに。</p></footer>
+
+<dialog id="settings-dialog" aria-labelledby="settings-heading">
+<div class="dialog-header"><div><p id="setup-step" class="help" hidden></p><h2 id="settings-heading">設定</h2></div><button type="button" id="close-settings" aria-label="設定を閉じる">閉じる</button></div>
+<p id="setup-description" class="help" hidden></p>
+<nav id="settings-navigation" class="settings-navigation" aria-label="設定の項目"><button type="button" data-panel="courses" aria-pressed="true">科目</button><button type="button" data-panel="time" aria-pressed="false">学習時間</button><button type="button" data-panel="data" aria-pressed="false">データ</button></nav>
+<div class="dialog-body">
+<section id="settings-courses" class="settings-panel" aria-labelledby="settings-courses-heading"><h3 id="settings-courses-heading">科目を登録・編集</h3><p class="help">履修している科目を、区分ごとに追加してください。進捗のチェックは本画面で行えます。</p><div id="settings-course-host"></div><button type="button" id="restore-in-setup" class="text-button">バックアップから復元する</button></section>
+<section id="settings-time" class="settings-panel" aria-labelledby="time-heading" hidden>
+<h2 id="time-heading">勉強できる時間</h2>
+<p class="help">演習授業の時間とは別の、自主学習に使える時間を設定してください。演習の授業時間はここから差し引きません。</p>
+<div class="field"><label for="start-date">計算開始日</label><div class="date-row"><input type="date" id="start-date" required><button type="button" id="today">今日に戻す</button></div><p class="help">開始日と締切当日を含めて計算します。<span id="q4-start-help"></span></p></div>
+<div id="weekday-inputs"></div>
+<p class="week-total">通常週の学習可能時間 <strong id="weekly-total">0分</strong></p>
+<fieldset class="holiday-rules"><legend>祝日の過ごし方</legend>
+<label class="radio"><input type="radio" name="holiday-rule" value="normal">普段どおり</label>
+<label class="radio"><input type="radio" name="holiday-rule" value="off">祝日は勉強しない</label>
+<label class="radio"><input type="radio" name="holiday-rule" value="custom">祝日は別の時間にする</label>
+</fieldset>
+<div id="holiday-custom" hidden><div class="slider-label"><label for="holiday-minutes">祝日の学習時間</label><output id="holiday-output" for="holiday-minutes">お休み</output></div><input type="range" id="holiday-minutes" min="0" max="480" step="15"></div>
+<p class="help">振替休日・国民の休日も含みます。冬季休業は自動的な休みにはなりません。</p>
+</section>
+
+<section id="settings-data" class="settings-panel backups" hidden aria-labelledby="backup-heading"><h2 id="backup-heading">データのバックアップ</h2><p class="help">データは端末・ブラウザごとに保存されます。ブラウザのデータ削除に備えて、ときどき書き出しておくと安心です。</p><div class="actions"><button type="button" id="export">バックアップを書き出す</button><label class="file-label" for="import">バックアップを読み込む<input id="import" type="file" accept=".json,application/json"></label></div><button type="button" id="reset" class="text-button">全データをリセット</button><p id="backup-message" role="status" class="help"></p></section>
+
+<p id="settings-error" class="warning" role="status" hidden></p>
+</div>
+<div class="dialog-actions"><button type="button" id="setup-back" hidden>科目登録に戻る</button><button type="button" id="settings-done">設定を閉じる</button></div>
+</dialog>
 </body></html>
