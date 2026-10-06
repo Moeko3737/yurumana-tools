@@ -56,3 +56,5 @@ body:has(#settings-dialog[open]){overflow:hidden}
 @media(max-width:400px){.workspace-navigation{grid-template-columns:repeat(3,minmax(0,1fr))}.workspace-navigation button{font-size:.75rem;padding:10px 0;white-space:nowrap}}
 
 .study-time-note{padding:14px 16px;background:var(--pale);border-left:3px solid var(--green);border-radius:0 8px 8px 0;overflow-wrap:anywhere}.study-time-note strong{display:block;color:var(--green)}.study-time-note span{display:block;margin-top:6px;font-size:.875rem;color:var(--muted)}
+
+.planner-link{margin-top:24px;padding:20px;background:var(--pale);border:1px solid var(--line);border-radius:10px}.planner-link h3{margin:0 0 8px;font-size:1rem}.planner-link p{font-size:.875rem;color:var(--muted);margin-bottom:12px}.planner-link a{display:inline-block;max-width:100%;min-height:48px;padding:12px 14px;border:1px solid var(--green);border-radius:8px;background:var(--surface);font-weight:600;text-decoration:none;overflow-wrap:anywhere}.planner-link a:hover{background:#e0eadd}
