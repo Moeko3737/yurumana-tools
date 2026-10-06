@@ -21,9 +21,11 @@ body:has(#settings-dialog[open]){overflow:hidden}
 /* 日常の操作は科目から。長い一覧は目的ごとに切り替える。 */
 .intro{margin-bottom:18px}.intro p{margin-bottom:0}
 .workspace-bar{align-items:flex-start}.workspace-bar button{font-size:.875rem}
-.workspace-navigation{display:grid;grid-template-columns:1fr 1fr 1.25fr;gap:4px;border-bottom:1px solid var(--line);margin:24px 0 0;padding-bottom:8px}
-.workspace-navigation button{background:transparent;border-color:transparent;padding:10px 4px;font-size:.875rem;color:var(--muted);border-radius:8px}
-.workspace-navigation button[aria-pressed=true]{background:var(--green);color:white;font-weight:700}
+.workspace-navigation{display:grid;grid-template-columns:1fr 1fr 1.25fr;gap:4px;border:1px solid var(--line);border-radius:12px;background:#e9eee7;margin:24px 0 0;padding:5px}
+.workspace-navigation button{background:transparent;border-color:transparent;padding:10px 2px;font-size:.875rem;line-height:1.5;color:var(--muted);border-radius:8px;overflow-wrap:anywhere}
+.workspace-navigation button[aria-pressed=true]{background:white;border-color:#c5d2c6;color:var(--green);font-weight:700;box-shadow:0 1px 3px rgb(48 61 54 / .08)}
+.workspace-navigation button:hover{background:#f4f7f2}
+.workspace-navigation button[aria-pressed=true]:hover{background:white}
 #progress-surface,#pace-surface,#outlook-surface{border:0;background:transparent;padding:24px 0;margin-bottom:16px}
 .progress-overview{color:var(--green);font-weight:600;margin-bottom:4px}
 #progress-host .course-section{border:0}
