@@ -31,7 +31,7 @@ function buildSections() {
   Object.entries(config.sections).forEach(([type, section]) => {
     const details = node("details", undefined, "course-section");
     details.id = `section-${type}`;
-    details.open = type === "onDemand3Q" || state.courses.some(course => course.type === type);
+    details.open = false;
     const summary = node("summary");
     summary.append(node("span", section.label), node("span", "", "section-count"));
     const list = node("div"); list.id = `courses-${type}`;
@@ -314,6 +314,9 @@ function showSettingsPanel(panel) {
 function openSettings(panel = "courses", firstRun = false) {
   setupMode = firstRun;
   $("settings-course-host").append($("course-sections"));
+  document.querySelectorAll(".course-section").forEach(section => {
+    section.open = section.id === "section-onDemand3Q" || Boolean(section.querySelector(".course"));
+  });
   showSettingsPanel(panel);
   $("settings-dialog").showModal();
 }
@@ -342,6 +345,7 @@ function initializeWorkspace() {
   $("close-settings").addEventListener("click", closeSettings);
   $("settings-dialog").addEventListener("cancel", () => { if (setupMode) markSetupComplete(); });
   $("settings-dialog").addEventListener("close", () => {
+    document.querySelectorAll("#course-sections details").forEach(details => { details.open = false; });
     $("progress-host").append($("course-sections"));
     updateWorkspaceSummary();
     $("open-settings").focus();

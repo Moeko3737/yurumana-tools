@@ -24,18 +24,18 @@
 <p class="help">入力はこのブラウザに自動保存されます。科目・学習時間の編集やバックアップは「設定」から行えます。</p>
 <p id="storage-message" class="warning" role="status" hidden></p>
 <div class="workspace-bar"><p id="current-settings" class="help"></p><button type="button" id="open-settings" aria-haspopup="dialog">設定</button></div>
+<section class="surface" id="progress-surface" aria-labelledby="courses-heading">
+<h2 id="courses-heading">進捗管理</h2>
+<p class="help">数字を押すと完了・未完了を切り替えます。動画・レポートの詳細は必要なときに開けます。</p>
+<p id="progress-empty" hidden>まだ科目がありません。<button type="button" id="register-courses">科目を登録する</button></p>
+<div id="progress-host"><div id="course-sections"></div></div>
+</section>
 <section class="surface pace-surface" aria-labelledby="pace-heading">
 <h2 id="pace-heading">おすすめの学習ペース</h2>
 <fieldset class="mode-switch"><legend class="sr-only">計算モード</legend><label><input type="radio" name="pace-mode" value="next">次の締切まで</label><label><input type="radio" name="pace-mode" value="final">最終締切まで</label></fieldset>
 <p class="unit-note">1本＝オンデマンド・pixiv・ライブ科目の授業1回分の目安です。演習は含みません。科目によって実際の学習時間は異なります。</p>
 <p class="help">演習は、祝日や自主学習時間が0分の日にも表示します。休講日として登録した日と、完了した演習科目は除きます。</p>
 <div id="daily-pace"></div>
-</section>
-<section class="surface" id="progress-surface" aria-labelledby="courses-heading">
-<h2 id="courses-heading">進捗管理</h2>
-<p class="help">数字を押すと完了・未完了を切り替えます。動画・レポートの詳細は必要なときに開けます。</p>
-<p id="progress-empty" hidden>まだ科目がありません。<button type="button" id="register-courses">科目を登録する</button></p>
-<div id="progress-host"><div id="course-sections"></div></div>
 </section>
 <section class="surface result-surface" aria-labelledby="result-heading">
 <h2 id="result-heading">締切までの見通し</h2>
