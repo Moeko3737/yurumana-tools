@@ -54,3 +54,5 @@ body:has(#settings-dialog[open]){overflow:hidden}
 @media(max-width:400px){.workspace-bar{display:block}.workspace-bar button{margin-top:8px}.workspace-navigation{margin-top:16px}.daily-row{padding:12px;grid-template-columns:5.8em minmax(0,1fr)}}
 .support-info{border-top:1px solid var(--line);margin-top:24px}.support-info>summary{font-size:.875rem;color:var(--muted);font-weight:400}.support-info .community{margin-top:16px}
 @media(max-width:400px){.workspace-navigation{grid-template-columns:repeat(3,minmax(0,1fr))}.workspace-navigation button{font-size:.75rem;padding:10px 0;white-space:nowrap}}
+
+.study-time-note{padding:14px 16px;background:var(--pale);border-left:3px solid var(--green);border-radius:0 8px 8px 0;overflow-wrap:anywhere}.study-time-note strong{display:block;color:var(--green)}.study-time-note span{display:block;margin-top:6px;font-size:.875rem;color:var(--muted)}
