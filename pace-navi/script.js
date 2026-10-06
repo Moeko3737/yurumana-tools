@@ -127,10 +127,11 @@ function initializeSettings() {
   $("holiday-minutes").value = state.settings.holidayMinutes;
   ["min", "max", "step"].forEach(key => $("holiday-minutes")[key] = config.slider[key]);
   document.querySelector(`input[name="holiday-rule"][value="${state.settings.holidayRule}"]`).checked = true;
-  document.querySelector(`input[name="pace-mode"][value="${state.settings.mode}"]`).checked = true;
   renderSettings();
 }
 function renderSettings() {
+  // 2つの画面は同じ計算期間を共有する。
+  document.querySelectorAll("[data-calculation-mode]").forEach(input => { input.checked = input.value === state.settings.mode; });
   DAYS.forEach((_,day) => {
     const text = dates.formatMinutes(state.settings.weekdays[day], true);
     $(`output-${day}`).textContent = text;
@@ -263,7 +264,7 @@ document.addEventListener("input",event=>{
   else if(/^day-[0-6]$/.test(input.id))state.settings.weekdays[Number(input.id.slice(-1))]=Number(input.value);
   else if(input.name==="holiday-rule")state.settings.holidayRule=input.value;
   else if(input.id==="holiday-minutes")state.settings.holidayMinutes=Number(input.value);
-  else if(input.name==="pace-mode")state.settings.mode=input.value;
+  else if(input.hasAttribute("data-calculation-mode"))state.settings.mode=input.value;
   else return;
   renderSettings();saveAndRender();
 });

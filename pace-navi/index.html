@@ -33,13 +33,14 @@
 </section>
 <section class="surface pace-surface" id="pace-surface" aria-labelledby="pace-heading" hidden>
 <h2 id="pace-heading">おすすめの学習ペース</h2>
-<fieldset class="mode-switch"><legend class="sr-only">計算モード</legend><label><input type="radio" name="pace-mode" value="next">次の締切まで</label><label><input type="radio" name="pace-mode" value="final">最終締切まで</label></fieldset>
+<fieldset class="mode-switch"><legend class="sr-only">計算モード</legend><label><input type="radio" name="pace-mode" data-calculation-mode value="next">次の締切まで</label><label><input type="radio" name="pace-mode" data-calculation-mode value="final">最終締切まで</label></fieldset>
 <details class="pace-guide"><summary>本数の見方・演習について</summary><p class="unit-note">1本＝オンデマンド・pixiv・ライブ科目の授業1回分の目安です。演習は含みません。科目によって実際の学習時間は異なります。</p>
 <p class="help">演習は、祝日や自主学習時間が0分の日にも表示します。休講日として登録した日と、完了した演習科目は除きます。</p>
 </details><div id="daily-pace"></div>
 </section>
 <section class="surface result-surface" id="outlook-surface" aria-labelledby="result-heading" hidden>
 <h2 id="result-heading">締切までの見通し</h2>
+<fieldset class="mode-switch"><legend class="sr-only">見通しの計算期間</legend><label><input type="radio" name="outlook-mode" data-calculation-mode value="next">次の締切まで</label><label><input type="radio" name="outlook-mode" data-calculation-mode value="final">最終締切まで</label></fieldset>
 <div id="results"></div>
 <p id="result-live" class="sr-only" aria-live="polite" aria-atomic="true"></p>
 </section>
