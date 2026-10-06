@@ -15,3 +15,5 @@ body:has(#settings-dialog[open]){overflow:hidden}
 #settings-done{background:var(--green);color:white;border-color:var(--green)}
 @media(max-width:400px){#settings-dialog{padding:18px 14px}.dialog-actions{bottom:-18px}.dialog-header{align-items:flex-start}.dialog-header h2{font-size:1.1rem}.dialog-header button{padding:8px 10px;font-size:.875rem}}
 #progress-host .course-section:not(:has(.course)){display:none}
+
+.pace-surface{background:var(--pale)}

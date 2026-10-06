@@ -46,3 +46,12 @@ for(let i=0;i<100;i++){
  assert.equal(res.days.reduce((sum,day)=>sum+day.count,0),res.placed);assert.equal(res.placed+res.unplaced,res.totalCount);assert.ok(res.days.every(day=>day.count===0 || day.minutes>=day.count*res.groups[0].average-1e-6));
 }
 console.log('比例配分の本数保存・時間上限（100パターン）PASS');
+
+// 演習の表示は自主学習の時間や祝日ルールから独立する。
+const holidaySeminar=course('seminar');holidaySeminar.weekday=1;holidaySeminar.name='祝日の演習';
+const seminarHolidayState=state([course('onDemand3Q'),holidaySeminar],'2026-10-12','next',0);
+seminarHolidayState.settings.holidayRule='off';
+let holidayDay=run(seminarHolidayState).days[0];
+assert.equal(holidayDay.minutes,0);assert.equal(holidayDay.count,0);assert.equal(holidayDay.seminars.length,1);
+holidaySeminar.cancellations=['2026-10-12'];assert.equal(run(seminarHolidayState).days[0].seminars.length,0);
+console.log('演習: 祝日・自主学習0分でも表示、明示した休講日は除外 PASS');

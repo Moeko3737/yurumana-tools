@@ -141,22 +141,25 @@ function appendMetric(list, title, value, major = false) {
 }
 function renderResults() {
   const container = $("results");
-  const expanded = container.querySelector(".more-days")?.open || false;
+  const pace = $("daily-pace");
+  const expanded = pace.querySelector(".more-days")?.open || false;
   container.replaceChildren();
+  pace.replaceChildren();
   const result = engine.calculate(state,config,JAPAN_HOLIDAYS);
   expiredWarning(result.expired,container);
   let announcement = "";
   if(result.error || result.empty) {
     container.append(node("p",result.error || result.empty,result.error ? "warning" : ""));
     announcement=result.error || result.empty;
+    pace.append(node("p", result.error || result.empty, result.error ? "warning" : "help"));
     // 演習だけの登録でも、曜日と休講を確認できるよう直近7日を表示。
     if(result.empty && state.courses.some(course=>course.type === "seminar" && engine.countCompleted(course)<config.sections.seminar.totalSessions) && dates.parseDate(state.settings.startDate)) {
-      container.append(node("h3","演習の曜日メモ（開始日から7日間）"));
+      pace.replaceChildren(node("p","演習の曜日メモ（開始日から7日間）","help"));
       const days=Array.from({length:7},(_,index)=>{
         const date=new Date(dates.parseDate(state.settings.startDate).getTime()+index*86400000),key=dates.dateKey(date),weekday=date.getUTCDay();
         return {date:key,weekday,minutes:0,count:0,seminars:state.courses.filter(course=>course.type === "seminar" && engine.countCompleted(course)<config.sections.seminar.totalSessions && course.weekday===weekday && !course.cancellations.includes(key)).map(course=>({name:course.name,color:course.color}))};
       });
-      container.append(buildDayList(days,true));
+      pace.append(buildDayList(days,true));
     }
   } else {
     container.append(node("p",`${state.settings.mode === "next" ? "次の締切" : "最終締切の範囲"}：${dates.formatDate(result.end)}まで（開始日から${result.calendarDays}日間）`));
@@ -179,10 +182,12 @@ function renderResults() {
     if(state.settings.mode==="final")container.append(node("p","早い最終締切の作業から時間を確保しています。3Qの作業を4Qの締切へ先送りせず、4Qは授業開始日以降に配分します。","help"));
     const deadlines=node("div",undefined,"deadline-list");
     result.groups.forEach(group=>deadlines.append(node("p",`${dates.formatDate(group.deadline)} ${group.type === "hard" ? "最終締切" : "途中締切"}：${group.count}本・約${dates.formatMinutes(group.minutes)}／配置${group.placed}本${group.unplaced ? `・不足${group.unplaced}本（約${dates.formatMinutes(group.missingMinutes)}）` : ""}${group.release>result.start ? `。${dates.formatDate(group.release)}から学習` : ""}`,"deadline-line")));
-    container.append(deadlines,node("h3","おすすめの学習ペース"));
-    container.append(node("p","どの科目を進めるか迷ったら、次の締切までの残り回数が多い科目や、進捗が遅れている科目から進めるのがおすすめです。","help"));
-    container.append(buildDayList(result.days.slice(0,7)));
-    if(result.days.length>7){const more=node("details",undefined,"more-days");more.open=expanded;more.append(node("summary",`続きを見る・閉じる（残り${result.days.length-7}日）`),buildDayList(result.days.slice(7)));container.append(more);}
+    container.append(deadlines);
+    pace.append(node("p", `${dates.formatDate(result.start)} 〜 ${dates.formatDate(result.end)}`, "help"));
+    if (result.unplaced) pace.append(node("p", `未配置の作業が${result.unplaced}本あります。下の「締切までの見通し」で不足量を確認できます。`, "warning"));
+    pace.append(buildDayList(result.days.slice(0,7)));
+    if(result.days.length>7){const more=node("details",undefined,"more-days");more.open=expanded;more.append(node("summary",`続きを見る・閉じる（残り${result.days.length-7}日）`),buildDayList(result.days.slice(7)));pace.append(more);}
+    pace.append(node("p","どの科目を進めるか迷ったら、次の締切までの残り回数が多い科目や、進捗が遅れている科目から進めるのがおすすめです。","help"));
     announcement=`残り${result.totalCount}本、必要な学習時間約${dates.formatMinutes(result.neededMinutes)}、配置${result.placed}本${result.unplaced ? `、未配置${result.unplaced}本` : ""}。`;
   }
   clearTimeout(announceTimer);announceTimer=setTimeout(()=>$("result-live").textContent=announcement,400);
@@ -191,7 +196,7 @@ function buildDayList(days, seminarOnly=false) {
   const list=node("ul",undefined,"daily-list");
   days.forEach(day=>{
     const date=dates.parseDate(day.date),row=node("li",undefined,"daily-row");const time=node("time",`${date.getUTCMonth()+1}/${date.getUTCDate()}（${DAYS[day.weekday]}）`);time.dateTime=day.date;
-    const value=node("div",seminarOnly ? "" : day.count ? `${day.count}本` : day.minutes===0 ? "お休み" : "0本（配分なし）","daily-count");
+    const value=node("div",seminarOnly ? "" : day.count ? `${day.count}本` : day.minutes===0 ? (day.seminars.length ? "自主学習はお休み" : "お休み") : "0本（配分なし）","daily-count");
     if(!seminarOnly)value.append(node("span",`学習可能：${dates.formatMinutes(day.minutes)}`,"daily-time"));
     day.seminars.forEach(seminar=>{const line=node("span",undefined,"seminar-note");line.style.setProperty("--seminar-color",seminar.color);line.append(node("span",undefined,"seminar-dot"),node("span",`＋ 演習「${seminar.name || "名称未入力"}」`));value.append(line);});
     if(seminarOnly && !day.seminars.length)value.textContent="演習なし";
