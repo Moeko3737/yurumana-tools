@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ゆるまなペースナビ｜ゆるまなTools</title>
+<meta name="description" content="科目の進捗と曜日ごとの学習時間から、締切までの日ごとのおすすめ学習本数を確認できます。ZEN大学生向け非公式ツール。">
+<link rel="stylesheet" href="../assets/css/common.css">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%278%27 fill=%27%23edf3ec%27/%3E%3Cpath d=%27M16 26V15C5 17 4 6 5 6c8-1 12 3 11 9 0-8 5-12 12-10 0 8-4 12-12 10%27 fill=%27%2342664f%27/%3E%3C/svg%3E">
+<script src="../assets/data/academic-config.js" defer></script>
+<script src="../assets/data/holidays.js" defer></script>
+<script src="../rishu-navi/calculator.js" defer></script>
+<script src="engine.js" defer></script>
+<script src="storage.js" defer></script>
+<script src="script.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">本文へ</a>
+<header><a class="brand" href="../">← ゆるまなTools</a></header>
+<main id="main">
+<div class="intro"><h1>ゆるまなペースナビ 🌱</h1><p>締切まで、どのくらいのペースで進めよう？</p><p class="muted">履修中の科目と進捗、使える時間を登録すると、1日ごとのおすすめ本数が分かります。どの科目を進めるかは、自分で選べます。</p></div>
+<noscript><p class="warning">JavaScriptを有効にしてご利用ください。</p></noscript>
+<p class="help">入力はこのブラウザに自動保存されます。別の端末へ移すときは、下部のJSONバックアップをご利用ください。</p>
+<p id="storage-message" class="warning" role="status" hidden></p>
+<section class="surface" aria-labelledby="courses-heading">
+<h2 id="courses-heading">1. 科目と進捗を登録</h2>
+<p class="help">科目の区分を開いて追加してください。数字のボタンで各回を完了にできます。動画・確認レポートの詳細記録は任意です。</p>
+<div id="course-sections"></div>
+</section>
+<section class="surface" aria-labelledby="time-heading">
+<h2 id="time-heading">2. 自分で学習に使える時間</h2>
+<p class="help">演習授業の時間とは別の、自主学習に使える時間を設定してください。演習の授業時間はここから差し引きません。</p>
+<div class="field"><label for="start-date">計算開始日</label><div class="date-row"><input type="date" id="start-date" required><button type="button" id="today">今日に戻す</button></div><p class="help">開始日と締切当日を含めて計算します。<span id="q4-start-help"></span></p></div>
+<div id="weekday-inputs"></div>
+<p class="week-total">通常週の学習可能時間 <strong id="weekly-total">0分</strong></p>
+<fieldset class="holiday-rules"><legend>祝日の過ごし方</legend>
+<label class="radio"><input type="radio" name="holiday-rule" value="normal">普段どおり</label>
+<label class="radio"><input type="radio" name="holiday-rule" value="off">祝日は勉強しない</label>
+<label class="radio"><input type="radio" name="holiday-rule" value="custom">祝日は別の時間にする</label>
+</fieldset>
+<div id="holiday-custom" hidden><div class="slider-label"><label for="holiday-minutes">祝日の学習時間</label><output id="holiday-output" for="holiday-minutes">お休み</output></div><input type="range" id="holiday-minutes" min="0" max="480" step="15"></div>
+<p class="help">振替休日・国民の休日も含みます。冬季休業は自動的な休みにはなりません。</p>
+</section>
+<section class="surface result-surface" aria-labelledby="result-heading">
+<h2 id="result-heading">3. 締切までのペース</h2>
+<fieldset class="mode-switch"><legend class="sr-only">計算モード</legend><label><input type="radio" name="pace-mode" value="next">次の締切まで</label><label><input type="radio" name="pace-mode" value="final">最終締切まで</label></fieldset>
+<p class="unit-note">1本＝オンデマンド・pixiv・ライブ科目の授業1回分の目安です。演習は含みません。科目によって実際の学習時間は異なります。</p>
+<div id="results"></div>
+<p id="result-live" class="sr-only" aria-live="polite" aria-atomic="true"></p>
+</section>
+<section class="notes"><h2>実際の学習予定を組みたい方へ</h2><p>この結果は「1日にどのくらい進めるとよいか」の目安です。「この日はWebアプリ、この日は心理学」のように具体的な予定を組みたい場合は、履修スケジュール管理表をご利用ください。</p><a class="plain-link" href="https://moeko3737.github.io/zen-study-planner/" target="_blank" rel="noopener noreferrer">履修スケジュール管理表を開く →</a></section>
+<section class="surface backups" aria-labelledby="backup-heading"><h2 id="backup-heading">データのバックアップ</h2><p class="help">データは端末・ブラウザごとに保存されます。ブラウザのデータ削除に備えて、ときどき書き出しておくと安心です。</p><div class="actions"><button type="button" id="export">バックアップを書き出す</button><label class="file-label" for="import">バックアップを読み込む<input id="import" type="file" accept=".json,application/json"></label></div><button type="button" id="reset" class="text-button">全データをリセット</button><p id="backup-message" role="status" class="help"></p></section>
+<section class="notes"><h2>使う前に知っておきたいこと</h2><p>学生個人が制作した非公式ツールです。結果は学習計画の目安で、成績や単位取得を保証するものではありません。科目ごとの実際の負荷は異なります。</p><p>途中締切を過ぎても未完了分を次の目標へ含めますが、成績に影響する場合があります。最終締切後の未完了分はおすすめペースに含めません。正式な締切・提出条件・授業情報は、必ず<a href="https://zen.ac.jp/">ZEN大学の公式情報</a>と各科目の案内で確認してください。</p><p>演習は曜日と休講日だけを表示します。各回の実施日や冬季休業中の授業有無は、授業の案内をご確認ください。</p></section>
+<section class="community" aria-labelledby="community-heading">
+<h2 id="community-heading">🌱 ゆるまなについて</h2>
+<p>このツールは、ZEN大学の学習交流サークル「ゆるまな」の管理人が制作しています。</p>
+<p>履修や学習について気軽に相談・共有したい方は、Slackのゆるまなへどうぞ〜！</p>
+<p class="community-channel">#ゆるまな-学習交流サークル</p>
+<div class="community-actions">
+<a class="community-link" href="slack://channel?team=T085SRUUM8W&amp;id=C0C5ZDWTQF5">Slackアプリで開く →</a>
+<a class="community-browser-link" href="https://zen-student.slack.com/archives/C0C5ZDWTQF5" target="_blank" rel="noopener noreferrer">ブラウザで見る →</a>
+</div>
+<p class="help">アプリが開かない場合は「ブラウザで見る」をご利用ください。</p>
+</section>
+
+</main>
+<footer><a href="../">← ゆるまなTools</a><p>学びを、ちょっとラクに。</p></footer>
+</body></html>
