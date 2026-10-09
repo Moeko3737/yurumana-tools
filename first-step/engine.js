@@ -98,6 +98,25 @@ const FirstStep = (() => {
     if (seconds > 0 && seconds < 60) return "1分未満";
     return hours ? `${hours}時間${minutes % 60 ? minutes % 60 + "分" : ""}` : `${minutes}分`;
   }
+  // 共有用に作業ごとに集計する。元の記録は書き換えない。
+  function reportLines(records) {
+    const groups = new Map();
+    for (const record of records) {
+      let name = record.name;
+      if (record.type === "work") {
+        const id = record.missionId || "";
+        if (id.startsWith("step-work-video-") || ["video","lesson","memo"].includes(id)) name = "授業を進める";
+        else if (id.startsWith("step-work-report-") || ["draft","report5","report10","report15","finish-report","submit"].includes(id)) name = "確認レポートを進める";
+        else if (id.startsWith("step-work-test-")) name = "テスト勉強";
+      }
+      const key = `${record.type}:${name}`;
+      const group = groups.get(key) || {name, work:record.type === "work", seconds:0, submitted:false};
+      group.seconds += record.studySeconds;
+      group.submitted ||= record.outcome === "submitted";
+      groups.set(key, group);
+    }
+    return [...groups.values()].map(group=>`☑︎${group.name}${group.work ? `：${formatTime(group.seconds)}` : ""}${group.submitted ? "（提出できた）" : ""}`);
+  }
   const activities = {video:"授業を進める", report:"確認レポート", test:"テスト勉強"};
   function step(id, name, type, seconds) {
     return {mission:{id, name, category:"今日の一歩", type, next:null, countTime:type === "work", automatic:true, goal:"", report:""}, seconds, status:"pending"};
@@ -160,6 +179,6 @@ const FirstStep = (() => {
     }
     return out;
   }
-  return {activities, createPlan, KEY, categories, missions, defaults, id, allMissions, suggest, elapsed, pause, begin, startWork, complete, dayKey, weekKey, totals, statistics, formatTime, validate};
+  return {reportLines, activities, createPlan, KEY, categories, missions, defaults, id, allMissions, suggest, elapsed, pause, begin, startWork, complete, dayKey, weekKey, totals, statistics, formatTime, validate};
 })();
 if (typeof module !== "undefined") module.exports = FirstStep;

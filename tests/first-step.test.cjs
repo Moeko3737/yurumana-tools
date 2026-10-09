@@ -40,3 +40,17 @@ const old=F.defaults();delete old.preferences;delete old.plan;assert.deepEqual(F
 const result=F.defaults();result.activeSession=F.begin(mission('video'),now);F.startWork(result.activeSession,now+5000);F.complete(result,now+65000,'submitted');assert.equal(F.validate(result).records[0].outcome,'submitted');
 assert.throws(()=>F.createPlan('constructor','ready',5));assert.throws(()=>F.createPlan('report','none',0));
 console.log('36組合せ/準備1分/やる気なしは作業なし/方法を決めつけない/次の作業の自由時間/旧データ互換/結果保存 PASS');
+
+const sharingRecords = [
+  {missionId:"step-pc",name:"PCを開く",type:"start",studySeconds:0},
+  {missionId:"pc",name:"PCを開く",type:"start",studySeconds:0},
+  {missionId:"step-work-report-5",name:"確認レポートを5分だけ進める",type:"work",studySeconds:300},
+  {missionId:"step-work-report-10",name:"確認レポートを10分だけ進める",type:"work",studySeconds:120,outcome:"submitted",corrected:true},
+  {missionId:"step-work-video-15",name:"授業を15分だけ進める",type:"work",studySeconds:900},
+  {missionId:"step-work-test-5",name:"5分だけテスト勉強をする",type:"work",studySeconds:30},
+  {missionId:"custom-1",name:"自分の作業",type:"work",studySeconds:0}
+];
+const beforeSharing = JSON.stringify(sharingRecords);
+assert.deepEqual(F.reportLines(sharingRecords),["☑︎PCを開く","☑︎確認レポートを進める：7分（提出できた）","☑︎授業を進める：15分","☑︎テスト勉強：1分未満","☑︎自分の作業：0分"]);
+assert.equal(JSON.stringify(sharingRecords),beforeSharing);
+console.log("共有文: 異なる設定時間の作業を集約・修正時間・準備重複・提出・自作・記録保持 PASS");
