@@ -190,7 +190,8 @@ function summary() {
     <details class="today-summary"><summary>今日のまとめ</summary>
     <ul>${today.map(r=>`<li>${escapeHTML(r.name)}</li>`).join("") || "<li>今回はここまで。完了記録は追加していません。</li>"}</ul>
     <p><strong>完了ミッション：${totals.count}個</strong><br>学習時間：${F.formatTime(totals.seconds)}</p></details>
-    <div class="actions">${button("today","今日の記録を見る")}${button("home","トップへ戻る")}</div>`);
+    <div class="actions">${button("today","今日の記録を見る")}${button("home","トップへ戻る")}</div>
+    ${today.length ? shareBox("report") : ""}`);
 }
 function recordMarkup(r) {
   const date = new Intl.DateTimeFormat("ja-JP",{timeZone:"Asia/Tokyo",hour:"2-digit",minute:"2-digit"}).format(new Date(r.completedAt));
@@ -204,6 +205,7 @@ function records(todayOnly = false) {
   show(todayOnly ? "today" : "history", `${button("home","← トップへ","back")}${heading(todayOnly ? "今日の記録" : "これまでの記録")}
     <dl class="stats"><div class="stat-major"><dt>${todayOnly ? "今日の学習時間" : "今週のがんばった時間"}</dt><dd>${F.formatTime(todayOnly ? stats.today.seconds : stats.week.seconds)}</dd></div>
     <div><dt>${todayOnly ? "今日" : "今週"}の完了ミッション</dt><dd>${todayOnly ? stats.today.count : stats.week.count}個</dd></div><div><dt>累計完了ミッション</dt><dd>${stats.all.count}個</dd></div><div><dt>累計学習時間</dt><dd>${F.formatTime(stats.all.seconds)}</dd></div></dl>
+    ${stats.today.count ? shareBox("report") : ""}
     ${todayOnly ? "" : `<details><summary>週ごとの学習時間</summary>${weeks.map(week=>`<div class="week-line"><span>${week}からの週</span><strong>${F.formatTime(F.totals(data.records.filter(r=>F.weekKey(r.completedAt) === week)).seconds)}</strong></div>`).join("") || "<p>まだ記録がありません。</p>"}</details>`}
     ${days.map(day=>`<section class="history-day"><h3>${day}（日本時間）</h3>${rows.filter(r=>F.dayKey(r.completedAt) === day).map(recordMarkup).join("")}</section>`).join("") || "<p>まだ完了記録がありません。小さな一歩も、ここに残ります。</p>"}`);
 }
