@@ -90,7 +90,15 @@ function confirmComplete(outcome=null) {
   advancePlan("done");save();completed(record,mission);celebrate();
 }
 function shareBox(kind, mission) {
-  const list = kind === "goal" && data.plan ? data.plan.steps.filter(entry=>entry.status === "pending").map(entry=>`◻︎${entry.mission.name}`) : kind === "report" ? data.records.filter(record=>F.dayKey(record.completedAt)===F.dayKey()).map(record=>`☑︎${record.name}${record.outcome === "submitted" ? "（提出できた）" : ""}`) : [`◻︎${mission.name}`];
+  // 共有文だけ同じ項目をまとめる。実際の完了記録・学習時間は変更しない。
+  const todayDone = new Map();
+  if (kind === "report") {
+    for (const record of data.records.filter(record=>F.dayKey(record.completedAt)===F.dayKey())) {
+      const submitted = record.outcome === "submitted" || todayDone.get(record.name) === true;
+      todayDone.set(record.name, submitted);
+    }
+  }
+  const list = kind === "goal" && data.plan ? data.plan.steps.filter(entry=>entry.status === "pending").map(entry=>`◻︎${entry.mission.name}`) : kind === "report" ? [...todayDone].map(([name,submitted])=>`☑︎${name}${submitted ? "（提出できた）" : ""}`) : [`◻︎${mission.name}`];
   const text = `${kind === "goal" ? "今日の目標" : "今日のできた"}\n${list.join("\n")}`;
   return `<details class="share-box"><summary>${kind === "goal" ? "Slackで目標を共有してみる？" : "Slackで今日のできたを共有してみる？"}</summary><label for="share-text">コピーする文章（編集できます）</label><textarea id="share-text" maxlength="1000">${escapeHTML(text)}</textarea>${button("copy","文章をコピー")}
     <p id="copy-message" class="help" role="status"></p><a id="slack-link" class="slack-link" href="https://zen-student.slack.com/archives/C0C5ZDWTQF5" target="_blank" rel="noopener noreferrer">ゆるまなのSlackチャンネルを開く →</a></details>`;
