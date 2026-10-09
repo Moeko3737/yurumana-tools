@@ -119,3 +119,13 @@ footer { max-width:640px; font-size:.75rem; border:0; margin-top:36px; color:#70
 [hidden] { display:none!important; }
 
 :focus-visible { outline:2px dashed #799574; outline-offset:4px; }
+
+.pick-options { display:grid; gap:12px; max-width:380px; margin:24px auto; }
+.pick-options button { min-height:56px; }
+.step-list { list-style:none; padding:0; margin:20px 0 28px; }
+.step-list li { display:flex; align-items:flex-start; gap:12px; padding:12px 0; border-bottom:1px solid var(--line); }
+.step-list small { display:block; color:var(--green); font-size:.75rem; }
+.step-done,.step-skipped { color:var(--muted); }
+body[data-screen="plan"] [data-action="start"] { display:block; max-width:340px; margin:0 auto; }
+body[data-screen="plan"] [data-action="skip"] { display:block; margin:8px auto; }
+body[data-screen="plan"]>.help { text-align:center; }

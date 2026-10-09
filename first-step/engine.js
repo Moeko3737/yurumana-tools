@@ -26,8 +26,8 @@ const FirstStep = (() => {
     ["schedule", "学習予定を確認する", 3, "start", "next", "学習予定を確認します。", "学習予定を確認しました。"],
     ["next", "次にやることを1つ決める", 3, "start", null, "次にやることを1つ決めます。", "次にやることを1つ決めました。"]
   ];
-  const missions = rows.map(([id, name, category, type, next, goal, report]) => ({id, name, category: categories[category], type, next, goal: `今日の目標：${goal}`, report, countTime: type === "work", automatic: true}));
-  const defaults = () => ({schemaVersion: 1, settings: {soundEnabled: true, volume: 0.35, motion: "full"}, customMissions: [], records: [], activeSession: null, route: {done: [], lastId: null}});
+  const missions = rows.map(([id, name, category, type, next, goal, report]) => ({id, name:name.replace(/レポート/g,"確認レポート"), category: categories[category], type, next, goal: `今日の目標：${goal.replace(/レポート/g,"確認レポート")}`, report:report.replace(/レポート/g,"確認レポート"), countTime: type === "work", automatic: true}));
+  const defaults = () => ({schemaVersion: 1, settings: {soundEnabled: true, volume: 0.35, motion: "full"}, customMissions: [], records: [], activeSession: null, route: {done: [], lastId: null}, preferences: {activity:"video", motivation:"little", minutes:5}, plan:null});
   const id = prefix => `${prefix}-${globalThis.crypto.randomUUID()}`;
   const allMissions = data => [...missions, ...data.customMissions];
   function suggest(data, from = data.route.lastId, excluded = []) {
@@ -44,7 +44,7 @@ const FirstStep = (() => {
     return all.find(m => m.automatic && !visited.has(m.id)) || null;
   }
   function elapsed(active, now = Date.now()) {
-    if (!active || active.phase === "countdown" || active.mission.type !== "work") return 0;
+    if (!active || active.phase === "countdown") return 0;
     return Math.max(0, Math.min(31536000, Math.floor((active.elapsedMs + (active.resumedAt === null ? 0 : Math.max(0, now - active.resumedAt))) / 1000)));
   }
   function pause(active, now = Date.now()) {
@@ -61,15 +61,16 @@ const FirstStep = (() => {
     if (active.phase !== "countdown" || now < active.countdownEnd) return false;
     active.phase = "running";
     active.startedAt = new Date(active.countdownEnd).toISOString();
-    active.resumedAt = active.mission.type === "work" ? active.countdownEnd : null;
+    active.resumedAt = active.countdownEnd;
     return true;
   }
-  function complete(data, now = Date.now()) {
+  function complete(data, now = Date.now(), outcome = null) {
     const active = data.activeSession;
     if (!active || active.phase !== "running") return null;
     const seconds = elapsed(active, now);
     const record = {id: active.id, missionId: active.mission.id, name: active.mission.name, type: active.mission.type, startedAt: active.startedAt, completedAt: new Date(now).toISOString(), elapsedSeconds: seconds, studySeconds: active.mission.countTime ? seconds : 0, corrected: false};
     if (data.records.some(r => r.id === record.id)) return null;
+    if (outcome) record.outcome = outcome;
     data.records.push(record);
     data.route.done = [...new Set([...data.route.done, active.mission.id])];
     data.route.lastId = active.mission.id;
@@ -97,6 +98,25 @@ const FirstStep = (() => {
     if (seconds > 0 && seconds < 60) return "1分未満";
     return hours ? `${hours}時間${minutes % 60 ? minutes % 60 + "分" : ""}` : `${minutes}分`;
   }
+  const activities = {video:"授業を進める", report:"確認レポート", test:"テスト勉強"};
+  function step(id, name, type, seconds) {
+    return {mission:{id, name, category:"今日の一歩", type, next:null, countTime:type === "work", automatic:true, goal:"", report:""}, seconds, status:"pending"};
+  }
+  // おまかせでは準備も独立した達成に。次の作業を自由に選ぶ場合は作業だけ。
+  function createPlan(activity, motivation, minutes, preparation = true) {
+    if (!Object.hasOwn(activities,activity) || !["none","little","ready"].includes(motivation) || !Number.isInteger(minutes) || minutes<1 || minutes>1440) throw new Error("選択内容を確認してください。");
+    const workMinutes = motivation === "little" && preparation ? (minutes<=5 ? Math.min(3,minutes) : minutes<=10 ? 5 : 10) : minutes;
+    const steps=[];
+    if(preparation) {
+      steps.push(step("step-pc","PCを開く","start",60));
+      steps.push(step(`step-open-${activity}`,activity === "video" ? "動画の再生ボタンを押す" : activity === "report" ? "確認レポートのページを開く" : "勉強に使うものを開く","start",60));
+    }
+    if(motivation !== "none" || !preparation) {
+      const name = activity === "video" ? `授業を${workMinutes}分だけ進める` : activity === "report" ? `確認レポートを${workMinutes}分だけ進める` : `${workMinutes}分だけテスト勉強をする`;
+      steps.push(step(`step-work-${activity}-${workMinutes}`,name,"work",workMinutes*60));
+    }
+    return {activity, index:0, steps};
+  }
   // バックアップを新しいオブジェクトへ検証・コピーする。不正データでは既存データを変えない。
   function validate(raw) {
     const bad = () => { throw new Error("バックアップの形式が正しくありません。対応バージョンは1です。"); };
@@ -115,10 +135,24 @@ const FirstStep = (() => {
     if (new Set(out.customMissions.map(m=>m.id)).size !== out.customMissions.length || out.customMissions.some(m=>missions.some(p=>p.id===m.id))) bad();
     out.records = raw.records.map(r => {
       if (!obj(r) || !validId(r.id) || !validId(r.missionId) || !str(r.name) || !["start","work"].includes(r.type) || !date(r.startedAt) || !date(r.completedAt) || Date.parse(r.completedAt) < Date.parse(r.startedAt) || !number(r.elapsedSeconds) || !number(r.studySeconds) || typeof r.corrected !== "boolean" || (r.type === "start" && r.studySeconds !== 0)) bad();
-      return {id:r.id, missionId:r.missionId, name:r.name, type:r.type, startedAt:r.startedAt, completedAt:r.completedAt, elapsedSeconds:r.elapsedSeconds, studySeconds:r.studySeconds, corrected:r.corrected};
+      if(r.outcome !== undefined && !["submitted","progress","finished"].includes(r.outcome)) bad();
+      return {id:r.id, missionId:r.missionId, name:r.name, type:r.type, startedAt:r.startedAt, completedAt:r.completedAt, elapsedSeconds:r.elapsedSeconds, studySeconds:r.studySeconds, corrected:r.corrected,...(r.outcome ? {outcome:r.outcome} : {})};
     });
     if (new Set(out.records.map(r=>r.id)).size !== out.records.length) bad();
     out.route = {done:[...raw.route.done], lastId:raw.route.lastId};
+    if(raw.preferences !== undefined) {
+      const p=raw.preferences;
+      if(!obj(p) || !Object.hasOwn(activities,p.activity) || !["none","little","ready"].includes(p.motivation) || !number(p.minutes,1440) || p.minutes<1) bad();
+      out.preferences={activity:p.activity,motivation:p.motivation,minutes:p.minutes};
+    }
+    if(raw.plan != null) {
+      const p=raw.plan;
+      if(!obj(p) || ![...Object.keys(activities),"custom"].includes(p.activity) || !Array.isArray(p.steps) || p.steps.length<1 || p.steps.length>3 || !number(p.index,p.steps.length)) bad();
+      out.plan={activity:p.activity,index:p.index,steps:p.steps.map((entry,i)=>{
+        if(!obj(entry) || !number(entry.seconds,86400) || !["pending","done","skipped"].includes(entry.status) || (i<p.index && entry.status === "pending") || (i>=p.index && entry.status !== "pending")) bad();
+        return {mission:mission(entry.mission),seconds:entry.seconds,status:entry.status};
+      })};
+    }
     if (raw.activeSession !== null) {
       const a = raw.activeSession;
       if (!obj(a) || !validId(a.id) || out.records.some(r=>r.id === a.id) || !["countdown","running"].includes(a.phase) || !number(a.countdownEnd,8640000000000000) || !number(a.elapsedMs,31536000000) || (a.resumedAt !== null && !number(a.resumedAt,8640000000000000)) || (a.timerTarget !== null && !number(a.timerTarget)) || (a.phase === "running" ? !date(a.startedAt) : a.startedAt !== null) || (a.phase === "countdown" && (a.resumedAt !== null || a.elapsedMs !== 0 || a.timerTarget !== null)) || (a.phase === "running" && a.resumedAt !== null && a.resumedAt < Date.parse(a.startedAt))) bad();
@@ -126,6 +160,6 @@ const FirstStep = (() => {
     }
     return out;
   }
-  return {KEY, categories, missions, defaults, id, allMissions, suggest, elapsed, pause, begin, startWork, complete, dayKey, weekKey, totals, statistics, formatTime, validate};
+  return {activities, createPlan, KEY, categories, missions, defaults, id, allMissions, suggest, elapsed, pause, begin, startWork, complete, dayKey, weekKey, totals, statistics, formatTime, validate};
 })();
 if (typeof module !== "undefined") module.exports = FirstStep;

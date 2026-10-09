@@ -29,3 +29,14 @@ console.log('自作ミッション許可・実行状態バックアップ往復 
 for(const mutate of [x=>x.schemaVersion=2,x=>x.settings.motion='bad',x=>x.records.push({...x.records[0]}),x=>x.records[0].studySeconds=-1,x=>x.records[0].elapsedSeconds=Infinity,x=>x.records[0].completedAt='2026-02-30T00:00:00.000Z',x=>x.customMissions[0].id='pc',x=>x.customMissions[0].name='',x=>x.activeSession.resumedAt=-1,x=>x.route.done.push('pc')]){const raw=JSON.parse(JSON.stringify(d));mutate(raw);assert.throws(()=>F.validate(raw));}
 assert.equal(F.formatTime(0),'0分');assert.equal(F.formatTime(59),'1分未満');assert.equal(F.formatTime(13500),'3時間45分');assert.equal(F.formatTime(3601,true),'1:00:01');
 console.log('不正JSON・重複ID・日付・数値・バージョン検証・時間表記 PASS');
+for(const activity of ['video','report','test'])for(const mood of ['none','little','ready'])for(const minutes of [5,10,15,25]){
+  const plan=F.createPlan(activity,mood,minutes);assert.equal(plan.steps[0].mission.name,'PCを開く');assert.equal(plan.steps[0].seconds,60);assert.equal(plan.steps[1].seconds,60);
+  assert.equal(plan.steps.filter(s=>s.mission.type==='work').length,mood==='none'?0:1);
+  assert.ok(plan.steps.every(s=>!s.mission.name.includes('ノート')&&!s.mission.name.includes('練習問題')&&!s.mission.name.includes('設問')));
+  const saved=F.defaults();saved.plan=plan;assert.deepEqual(F.validate(JSON.parse(JSON.stringify(saved))).plan,plan);
+}
+const direct=F.createPlan('video','little',13,false);assert.equal(direct.steps.length,1);assert.equal(direct.steps[0].seconds,780);
+const old=F.defaults();delete old.preferences;delete old.plan;assert.deepEqual(F.validate(old).preferences,F.defaults().preferences);
+const result=F.defaults();result.activeSession=F.begin(mission('video'),now);F.startWork(result.activeSession,now+5000);F.complete(result,now+65000,'submitted');assert.equal(F.validate(result).records[0].outcome,'submitted');
+assert.throws(()=>F.createPlan('constructor','ready',5));assert.throws(()=>F.createPlan('report','none',0));
+console.log('36組合せ/準備1分/やる気なしは作業なし/方法を決めつけない/次の作業の自由時間/旧データ互換/結果保存 PASS');
