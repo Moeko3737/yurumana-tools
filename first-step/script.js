@@ -32,8 +32,8 @@ function show(name, html, focus = true) {
   window.scrollTo({top:0, behavior:"instant"});
 }
 function home() {
-  show("home", `${heading("まずは、小さなことを1つ。")}
-    <p>PCを開くだけでも、一歩です。</p><div class="home-actions">${button("automatic","おまかせで始める","primary large")}${button("choose","自分で選ぶ","large")}</div>
+  show("home", `${heading("今日は、どんな一歩にしよう？")}
+    <p>PCを開くくらいの、小さなことからでも。</p><div class="home-actions">${button("automatic","小さな一歩を提案してもらう","primary large")}${button("choose","自分で選ぶ","large")}</div>
     <nav class="home-links" aria-label="記録と設定">${button("today","今日の記録")}${button("history","これまでの記録")}${button("custom","マイミッション")}${button("settings","設定")}</nav>
     <p class="home-note">小さく始めて、今日はここまででもOK。記録は自分の振り返りのためのものです。</p>`);
 }
@@ -45,15 +45,15 @@ function shareBox(kind, mission) {
 function propose(mission) {
   if (!mission) { choose(); status("ひと通り進みました。次は好きなミッションを選べます。"); return; }
   selected = {...mission};
-  show("proposal", `${button("home","← トップへ","back")}${heading("今日の一歩")}
+  show("proposal", `${button("home","← トップへ","back")}${heading("こんな一歩はどう？")}
     <div class="mission-main"><p class="eyebrow">${mission.type === "work" ? "作業ミッション" : "着手ミッション"}</p><h3 class="mission-title">${escapeHTML(mission.name)}</h3></div>
-    ${button("start","5秒で始める","primary large")}
+    ${button("start","今からやる","primary large")}
     <div class="actions">${button("alternative","別のミッションにする")}${button("choose","自分で選ぶ")}</div>
-    ${button("skip","もうできているのでスキップ","quiet")}${shareBox("goal",mission)}`);
+    ${button("skip","もうできているので、次の候補へ","quiet")}<p class="help gentle-note">しっくりこなければ選び直してOK。今日はここまででも大丈夫。</p>${shareBox("goal",mission)}`);
 }
 function choose() {
   const all = F.allMissions(data), categories = [...new Set(all.map(m=>m.category))];
-  show("choose", `${button("return","← 戻る","back")}${heading("今できそうなことを1つ。")}
+  show("choose", `${button("return","← 戻る","back")}${heading("気になるものを、1つ選んでみよう。")}
     <p class="help">動画1本と授業1回分は、別のミッションです。</p>
     ${categories.map(category => `<section class="selection-group"><h3>${escapeHTML(category)}</h3><div class="selection-list">${all.filter(m=>m.category === category).map(m=>button("select", `${escapeHTML(m.name)}<small>${m.type === "work" ? "作業" : "着手"}</small>`, "", `data-id="${m.id}"`)).join("")}</div></section>`).join("")}`);
 }
@@ -63,23 +63,23 @@ function startCountdown() {
   data.activeSession = F.begin(selected); timerAnnounced = false; save(); countdown();
 }
 function countdown() {
-  show("countdown", `${heading("始めるタイミングを作ろう。")}
+  show("countdown", `${heading("ひと呼吸、置いてから。")}
     <p class="center">${escapeHTML(data.activeSession.mission.name)}</p>
     <div id="countdown-number" class="countdown-number center" aria-live="polite" aria-atomic="true">5</div>
-    <p class="center help">カウントが終わったら、最初の一歩を。</p>${button("cancel-countdown","キャンセルして戻る","large")}`);
+    <p class="center help">自分のペースで、ゆっくりどうぞ。</p>${button("cancel-countdown","いったん戻る","large")}`);
   tick();
 }
 function running() {
   const a = data.activeSession;
   if (!a) return home();
-  show("running", `${heading("今やること")}
+  show("running", `${heading("いまは、これだけ。")}
     <h3 class="mission-title">${escapeHTML(a.mission.name)}</h3>
     ${a.mission.type === "work" ? `<div class="center"><p id="timer-label" class="eyebrow">経過時間</p><div id="work-time" class="time-display" role="timer" aria-live="off">00:00</div><p id="elapsed-time" class="elapsed"></p></div>
       <p id="timer-message" class="notice" role="status" hidden></p><div id="timer-ended" class="actions" hidden>${button("extend","あと5分")}${button("continue","このまま続ける")}</div>
       <div class="actions">${button("pause",a.resumedAt === null ? "再開" : "一時停止")}</div>` : `<p class="help">できたかどうかは、自分で決めて大丈夫です。</p>`}
     ${button("complete","できた！","primary large")}
     ${a.mission.type === "work" ? `<details class="timer-settings"><summary>作業用タイマーを設定・変更</summary><label for="timer-choice">タイマーの長さ</label><select id="timer-choice"><option value="0">タイマーなし</option><option value="5">5分</option><option value="10">10分</option><option value="15">15分</option><option value="25">25分</option><option value="custom">自由設定</option></select><div id="custom-timer" hidden><label for="timer-minutes">時間（1〜1440分）</label><input id="timer-minutes" type="number" min="1" max="1440" value="5" inputmode="numeric"></div>${button("set-timer","この設定にする")}<p class="help">今からの時間を設定します。時間になっても自動完了はしません。</p></details>` : ""}
-    <div class="actions">${button("change","ミッションを変更する","quiet")}${button("quit","今回はやめる","quiet")}</div>`);
+    <div class="actions">${button("change","違うことにする")}${button("quit","今回はここまで")}</div>`);
   tick();
 }
 function tick() {
