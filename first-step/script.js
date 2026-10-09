@@ -6,7 +6,7 @@ const button = (action, text, className = "", extra = "") => `<button type="butt
 const isoNow = () => new Date().toISOString();
 let data = F.defaults(), blocked = false, screen = "home", selected = null, lastRecord = null;
 let alternativeIds = [], restored = false, timerAnnounced = false, interval;
-let audioContext, animationFrame, celebrationTimeout;
+let audioContext, celebrationTimeout;
 try {
   const saved = localStorage.getItem(F.KEY);
   if (saved) data = F.validate(JSON.parse(saved));
@@ -25,17 +25,20 @@ function updateSound() {
   $("sound-toggle").textContent = data.settings.soundEnabled ? "音 ON" : "音 OFF";
   $("sound-toggle").setAttribute("aria-pressed", String(data.settings.soundEnabled));
 }
+// 承認した1枚の画像から、CSSで3つの姿を表示する。
+function buddy(pose = "sit", small = false) {
+  return `<div class="buddy-stage${small ? " buddy-small" : ""}" aria-hidden="true"><div class="mascot mascot-${pose}"><span class="buddy-flower flower-left">✿</span><span class="buddy-flower flower-right">✿</span></div></div>`;
+}
 function heading(title) { return `<h2 id="screen-heading" tabindex="-1">${title}</h2>`; }
 function show(name, html, focus = true) {
-  screen = name; $("screen").innerHTML = html; status();
+  screen = name; document.body.dataset.screen = name; $("screen").innerHTML = html; status();
   if (focus) $("screen-heading")?.focus({preventScroll:true});
   window.scrollTo({top:0, behavior:"instant"});
 }
-function home() {
-  show("home", `${heading("今日は、どんな一歩にしよう？")}
-    <p>PCを開くくらいの、小さなことからでも。</p><div class="home-actions">${button("automatic","小さな一歩を提案してもらう","primary large")}${button("choose","自分で選ぶ","large")}</div>
-    <nav class="home-links" aria-label="記録と設定">${button("today","今日の記録")}${button("history","これまでの記録")}${button("custom","マイミッション")}${button("settings","設定")}</nav>
-    <p class="home-note">小さく始めて、今日はここまででもOK。記録は自分の振り返りのためのものです。</p>`);
+function home(focus = true) {
+  show("home", `${buddy("rest")}${heading("なにか、ちょっとやる？")}
+    <div class="home-actions">${button("automatic","おまかせ","primary large")}${button("choose","自分で選ぶ","large")}</div>
+    <details id="home-menu"><summary>記録と設定</summary><nav class="home-links" aria-label="記録と設定">${button("today","今日の記録")}${button("history","これまでの記録")}${button("custom","マイミッション")}${button("settings","設定")}</nav></details>`, focus);
 }
 function shareBox(kind, mission) {
   const text = kind === "goal" ? mission.goal || `今日の目標：${mission.name}` : mission.report || `今日の達成：${mission.name}`;
@@ -45,11 +48,11 @@ function shareBox(kind, mission) {
 function propose(mission) {
   if (!mission) { choose(); status("ひと通り進みました。次は好きなミッションを選べます。"); return; }
   selected = {...mission};
-  show("proposal", `${button("home","← トップへ","back")}${heading("こんな一歩はどう？")}
-    <div class="mission-main"><p class="eyebrow">${mission.type === "work" ? "作業ミッション" : "着手ミッション"}</p><h3 class="mission-title">${escapeHTML(mission.name)}</h3></div>
+  show("proposal", `${button("home","← トップへ","back")}${buddy("sit")}${heading("これとか、どう？")}
+    <div class="mission-main"><h3 class="mission-title">${escapeHTML(mission.name)}</h3></div>
     ${button("start","今からやる","primary large")}
-    <div class="actions">${button("alternative","別のミッションにする")}${button("choose","自分で選ぶ")}</div>
-    ${button("skip","もうできているので、次の候補へ","quiet")}<p class="help gentle-note">しっくりこなければ選び直してOK。今日はここまででも大丈夫。</p>${shareBox("goal",mission)}`);
+    <div class="actions">${button("alternative","別のにする")}${button("choose","自分で選ぶ")}</div>
+    ${button("skip","もうできてる → 次の候補","quiet")}${shareBox("goal",mission)}`);
 }
 function choose() {
   const all = F.allMissions(data), categories = [...new Set(all.map(m=>m.category))];
@@ -63,20 +66,19 @@ function startCountdown() {
   data.activeSession = F.begin(selected); timerAnnounced = false; save(); countdown();
 }
 function countdown() {
-  show("countdown", `${heading("ひと呼吸、置いてから。")}
-    <p class="center">${escapeHTML(data.activeSession.mission.name)}</p>
+  show("countdown", `${heading("じゃ、のんびりいこう。")}${buddy("rest")}
     <div id="countdown-number" class="countdown-number center" aria-live="polite" aria-atomic="true">5</div>
-    <p class="center help">自分のペースで、ゆっくりどうぞ。</p>${button("cancel-countdown","いったん戻る","large")}`);
+    ${button("cancel-countdown","いったん戻る","large")}`);
   tick();
 }
 function running() {
   const a = data.activeSession;
   if (!a) return home();
-  show("running", `${heading("いまは、これだけ。")}
+  show("running", `${buddy("sit",true)}${heading("いまは、これだけ。") }
     <h3 class="mission-title">${escapeHTML(a.mission.name)}</h3>
     ${a.mission.type === "work" ? `<div class="center"><p id="timer-label" class="eyebrow">経過時間</p><div id="work-time" class="time-display" role="timer" aria-live="off">00:00</div><p id="elapsed-time" class="elapsed"></p></div>
       <p id="timer-message" class="notice" role="status" hidden></p><div id="timer-ended" class="actions" hidden>${button("extend","あと5分")}${button("continue","このまま続ける")}</div>
-      <div class="actions">${button("pause",a.resumedAt === null ? "再開" : "一時停止")}</div>` : `<p class="help">できたかどうかは、自分で決めて大丈夫です。</p>`}
+      <div class="actions">${button("pause",a.resumedAt === null ? "再開" : "一時停止")}</div>` : ""}
     ${button("complete","できた！","primary large")}
     ${a.mission.type === "work" ? `<details class="timer-settings"><summary>作業用タイマーを設定・変更</summary><label for="timer-choice">タイマーの長さ</label><select id="timer-choice"><option value="0">タイマーなし</option><option value="5">5分</option><option value="10">10分</option><option value="15">15分</option><option value="25">25分</option><option value="custom">自由設定</option></select><div id="custom-timer" hidden><label for="timer-minutes">時間（1〜1440分）</label><input id="timer-minutes" type="number" min="1" max="1440" value="5" inputmode="numeric"></div>${button("set-timer","この設定にする")}<p class="help">今からの時間を設定します。時間になっても自動完了はしません。</p></details>` : ""}
     <div class="actions">${button("change","違うことにする")}${button("quit","今回はここまで")}</div>`);
@@ -89,7 +91,9 @@ function tick() {
   if (a.phase === "countdown") {
     const seconds = Math.max(0, Math.ceil((a.countdownEnd - now) / 1000));
     if ($("countdown-number") && $("countdown-number").textContent !== String(seconds)) $("countdown-number").textContent = seconds ? String(seconds) : "スタート！";
-    if (F.startWork(a,now)) { save(); running(); status("スタート！できたら「できた！」を押してください。"); }
+    const mascot = document.querySelector(".mascot");
+    if (mascot) mascot.className = `mascot mascot-${seconds > 3 ? "rest" : seconds > 1 ? "sit" : "hop"}`;
+    if (F.startWork(a,now)) { save(); running(); status(); }
   } else if (screen === "running" && a.mission.type === "work") {
     const elapsed = F.elapsed(a,now), remaining = a.timerTarget === null ? null : Math.max(0,a.timerTarget-elapsed);
     $("timer-label").textContent = remaining === null ? "経過時間" : "残り時間";
@@ -119,21 +123,21 @@ function recordEditor(record) {
 }
 function completed(record, mission) {
   lastRecord = record; selected = mission;
-  show("completed", `${heading("一歩、できました。")}
-    <h3 class="mission-title">「${escapeHTML(record.name)}」が完了しました。</h3>
-    <p id="recorded-time" class="help">学習時間：${F.formatTime(record.studySeconds)}（計測：${F.formatTime(record.elapsedSeconds,true)}）</p>
-    ${record.type === "work" ? '<p class="notice">計測は目安です。離れていた時間が含まれる場合は、実際に勉強した時間に修正してください。</p>' : ""}
-    ${recordEditor(record)}
-    <div class="actions equal-actions">${button("another","もう1個やる")}${button("finish","今日はここまで")}</div>${shareBox("report",mission)}`);
+  show("completed", `${buddy("hop")}${heading("できたね。")}
+    <h3 class="mission-title">${escapeHTML(record.name)}</h3>
+    <div id="celebration" class="celebration-message" hidden><span id="cheer" role="status">やった〜</span>${button("skip-celebration","動きをとめる","quiet",'id="skip-celebration"')}</div>
+    <div class="actions equal-actions">${button("another","もう1個やる")}${button("finish","今日はここまで")}</div>
+    ${record.type === "work" ? `<p id="recorded-time" class="help">学習時間 ${F.formatTime(record.studySeconds)}</p>${recordEditor(record)}` : ""}
+    ${shareBox("report",mission)}`);
 }
 function summary() {
   const today = data.records.filter(r=>F.dayKey(r.completedAt) === F.dayKey());
   const totals = F.totals(today);
   data.route = {done:[],lastId:null}; alternativeIds = []; save();
-  show("summary", `${heading("今日のまとめ 🌱")}
-    <p>おつかれさまでした🌱</p>
+  show("summary", `${buddy("rest",true)}${heading("じゃ、またね〜")}
+    <details class="today-summary"><summary>今日のまとめ</summary>
     <ul>${today.map(r=>`<li>${escapeHTML(r.name)}</li>`).join("") || "<li>今回はここまで。完了記録は追加していません。</li>"}</ul>
-    <p><strong>完了ミッション：${totals.count}個</strong><br>学習時間：${F.formatTime(totals.seconds)}</p>
+    <p><strong>完了ミッション：${totals.count}個</strong><br>学習時間：${F.formatTime(totals.seconds)}</p></details>
     <div class="actions">${button("today","今日の記録を見る")}${button("home","トップへ戻る")}</div>`);
 }
 function recordMarkup(r) {
@@ -171,7 +175,7 @@ function settings() {
   show("settings", `${button("home","← トップへ","back")}${heading("設定・バックアップ")}
     <label class="check-label"><input id="sound-setting" type="checkbox" ${data.settings.soundEnabled ? "checked" : ""}>お祝いの音を鳴らす</label>
     <label for="volume-setting">効果音の音量 <output id="volume-output">${Math.round(data.settings.volume*100)}%</output></label><input id="volume-setting" type="range" min="0" max="100" step="5" value="${Math.round(data.settings.volume*100)}">
-    <label for="motion-setting">祝福の演出</label><select id="motion-setting"><option value="full" ${data.settings.motion === "full" ? "selected" : ""}>盛大にお祝い</option><option value="light" ${data.settings.motion === "light" ? "selected" : ""}>軽め（動きを抑える）</option><option value="off" ${data.settings.motion === "off" ? "selected" : ""}>演出なし</option></select>
+    <label for="motion-setting">祝福の演出</label><select id="motion-setting"><option value="full" ${data.settings.motion === "full" ? "selected" : ""}>この子とお祝い</option><option value="light" ${data.settings.motion === "light" ? "selected" : ""}>軽め（動きを抑える）</option><option value="off" ${data.settings.motion === "off" ? "selected" : ""}>演出なし</option></select>
     <p class="help">OSで「動きを減らす」を設定している場合も、演出を軽くします。音量は端末側でも調整できます。</p>
     <h3>データのバックアップ</h3><p class="help">この端末・ブラウザに保存します。自動同期はありません。ブラウザのデータ削除に備えて、書き出しておくと安心です。</p>
     <div class="actions">${button("export","データを書き出す")}<label class="file-label" for="import">バックアップから復元する<input id="import" type="file" accept=".json,application/json"></label></div>
@@ -206,26 +210,20 @@ function sound(celebrate = true) {
   } catch { /* 音声再生失敗で記録を止めない。 */ }
 }
 function stopCelebration() {
-  clearTimeout(celebrationTimeout); cancelAnimationFrame(animationFrame); $("celebration").hidden = true;
+  clearTimeout(celebrationTimeout);
+  document.querySelector(".mascot")?.classList.remove("buddy-celebrate");
+  if ($("celebration")) $("celebration").hidden = true;
 }
 function celebrate() {
   sound(); stopCelebration();
   if (data.settings.motion === "off") return;
   const light = data.settings.motion === "light" || matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const cheers = ["ミッション達成！！！","やりました！！！！","本日の一歩、成功！！！","完了です！！！！"];
-  $("cheer").textContent = cheers[Math.floor(Math.random()*cheers.length)].replace("、", "、\n");
-  $("celebration").classList.toggle("motion-light",light); $("celebration").hidden=false;
-  const canvas=$("confetti"), context=canvas.getContext("2d"), width=innerWidth, height=innerHeight;
-  canvas.width=width;canvas.height=height;
-  const colors=["#70977b","#e6bf5b","#d78b95","#84b8cb","#9c8bb7"];
-  const pieces=Array.from({length:light ? 30 : 170},()=>({x:Math.random()*width,y:Math.random()*height-height,vx:(Math.random()-.5)*5,vy:2+Math.random()*5,r:Math.random()*6.3,color:colors[Math.floor(Math.random()*colors.length)]}));
-  const start=performance.now();
-  function paint(now) {
-    context.clearRect(0,0,width,height);
-    pieces.forEach(p=>{if(!light){p.x+=p.vx;p.y+=p.vy;p.r+=.05;}else p.y+=height/2;context.save();context.translate(p.x,p.y);context.rotate(p.r);context.fillStyle=p.color;context.fillRect(-4,-3,8,6);context.restore();});
-    if(!light && now-start<3500)animationFrame=requestAnimationFrame(paint);
-  }
-  paint(start);celebrationTimeout=setTimeout(stopCelebration,light ? 1800 : 3500);
+  $("celebration").classList.toggle("motion-light",light);
+  $("celebration").hidden = false;
+  const mascot = document.querySelector(".mascot");
+  mascot?.classList.toggle("buddy-still",light);
+  mascot?.classList.add("buddy-celebrate");
+  celebrationTimeout=setTimeout(stopCelebration,light ? 1800 : 3200);
 }
 function exitActive(change = false) {
   if (data.activeSession && !confirm("このミッションを未完了のまま終了しますか？完了記録は追加しません。")) return;
@@ -238,6 +236,7 @@ $("screen").addEventListener("click", async event=>{
   const action=control.dataset.action, id=control.dataset.id;
   initAudio();
   switch(action) {
+    case "skip-celebration": stopCelebration();$("screen-heading")?.focus();break;
     case "home": stopCelebration(); home(); break;
     case "return": selected ? propose(selected) : home(); break;
     case "automatic": alternativeIds=[];propose(F.suggest(data));break;
@@ -317,8 +316,7 @@ $("screen").addEventListener("change",async event=>{
   }
 });
 $("sound-toggle").addEventListener("click",()=>{data.settings.soundEnabled=!data.settings.soundEnabled;save();updateSound();if($("sound-setting"))$("sound-setting").checked=data.settings.soundEnabled;});
-$("skip-celebration").addEventListener("click",()=>{stopCelebration();$("screen-heading")?.focus();});
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)tick();});
 window.addEventListener("pagehide",save);
 updateSound();interval=setInterval(tick,200);
-if(data.activeSession)restoredScreen();else home();
+if(data.activeSession)restoredScreen();else home(false);
