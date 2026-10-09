@@ -27,7 +27,7 @@ const FirstStep = (() => {
     ["next", "次にやることを1つ決める", 3, "start", null, "次にやることを1つ決めます。", "次にやることを1つ決めました。"]
   ];
   const missions = rows.map(([id, name, category, type, next, goal, report]) => ({id, name:name.replace(/レポート/g,"確認レポート"), category: categories[category], type, next, goal: `今日の目標：${goal.replace(/レポート/g,"確認レポート")}`, report:report.replace(/レポート/g,"確認レポート"), countTime: type === "work", automatic: true}));
-  const defaults = () => ({schemaVersion: 1, settings: {soundEnabled: true, volume: 0.35, motion: "full"}, customMissions: [], records: [], activeSession: null, route: {done: [], lastId: null}, preferences: {activity:"video", motivation:"little", minutes:5}, plan:null});
+  const defaults = () => ({schemaVersion: 1, settings: {soundEnabled: false, volume: 0.35, motion: "full"}, customMissions: [], records: [], activeSession: null, route: {done: [], lastId: null}, preferences: {activity:"video", motivation:"little", minutes:5}, plan:null});
   const id = prefix => `${prefix}-${globalThis.crypto.randomUUID()}`;
   const allMissions = data => [...missions, ...data.customMissions];
   function suggest(data, from = data.route.lastId, excluded = []) {
